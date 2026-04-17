@@ -29,10 +29,14 @@ app.use('/public/Pending', express.static(path.join(__dirname, 'public/Pending')
 app.use(express.urlencoded({ extended: true }));
 
 
-const sslOptions = {
-  key: fs.readFileSync(path.join(__dirname, "key.pem")),
-  cert: fs.readFileSync(path.join(__dirname, "cert.pem")),
-};
+
+                    // SSL For Local System 
+
+
+// const sslOptions = {
+//   key: fs.readFileSync(path.join(__dirname, "key.pem")),
+//   cert: fs.readFileSync(path.join(__dirname, "cert.pem")),
+// };
 
 
 // ====== MYSQL CONFIG ======
@@ -1941,10 +1945,13 @@ nominee2: ${depc.NOM2 || ""}
 
 
 // Instead of app.listen()
-https.createServer(sslOptions, app).listen(5000, "0.0.0.0", () => {
-  console.log("✅ HTTPS Server running at https://192.168.1.50:5000");
-    console.log("✅ HTTPS Server running at https://192.168.1.100:5000");
-
-});
 
 
+// https.createServer(sslOptions, app).listen(5000, "0.0.0.0", () => {
+//   console.log("✅ HTTPS Server running at https://192.168.1.50:5000");
+//     console.log("✅ HTTPS Server running at https://192.168.1.100:5000");
+
+// });
+
+
+module.exports = app;

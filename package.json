@@ -1,0 +1,30 @@
+{
+  "dependencies": {
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "body-parser": "^2.2.0",
+    "cheerio": "^1.1.2",
+    "dotenv": "^17.2.3",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-session": "^1.18.2",
+    "fs-extra": "^11.3.2",
+    "geoip-lite": "^1.4.10",
+    "got": "^14.4.9",
+    "init": "^0.1.2",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.14.3",
+    "nodemailer": "^7.0.9",
+    "pidusage": "^4.0.1",
+    "selfsigned": "^3.0.1",
+    "serverless-http": "^4.0.0",
+    "socket.io": "^4.8.1",
+    "systeminformation": "^5.27.11",
+    "tough-cookie": "^6.0.0",
+    "xml2js": "^0.6.2"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.1.16"
+  }
+}
