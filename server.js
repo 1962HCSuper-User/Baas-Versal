@@ -41,10 +41,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // ====== MYSQL CONFIG ======
 const db = mysql.createConnection({
-  host: "127.0.0.1",
+  host: "dpg-d7h2ba67r5hc73dss7rg-a",
   user: "root",
-  password: "196200010#$Harsh", // change this
-  database: "bass"       // change to your DB
+  password: "5432", // change this
+  database: "sahara_9z5m"       // change to your DB
 });
 
 
@@ -1954,6 +1954,8 @@ nominee2: ${depc.NOM2 || ""}
 //     console.log("✅ HTTPS Server running at https://192.168.1.100:5000");
 
 // });
+app.listen(5000, "0.0.0.0", () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
 
-
-module.exports = app;
+// module.exports = app;
