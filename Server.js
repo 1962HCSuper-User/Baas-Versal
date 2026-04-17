@@ -669,34 +669,36 @@ app.post('/save', (req, res) => {
 
 
 // Helper function to convert numbers up to 10 lakh
-function numberToWords(num) {
-    const single = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
-    const twoDigit = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
-                      "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
-    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
 
-    if (!num || num === 0) return "Zero";
 
-    let words = "";
+// function numberToWords(num) {
+//     const single = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"];
+//     const twoDigit = ["Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen",
+//                       "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+//     const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
 
-    const lakh = Math.floor(num / 100000);
-    const thousand = Math.floor((num % 100000) / 1000);
-    const hundred = Math.floor((num % 1000) / 100);
-    const remainder = num % 100;
+//     if (!num || num === 0) return "Zero";
 
-    if (lakh > 0) words += `${convertTwoDigits(lakh)} Lakh `;
-    if (thousand > 0) words += `${convertTwoDigits(thousand)} Thousand `;
-    if (hundred > 0) words += `${single[hundred]} Hundred `;
-    if (remainder > 0) words += `and ${convertTwoDigits(remainder)} `;
+//     let words = "";
 
-    return words.trim();
+//     const lakh = Math.floor(num / 100000);
+//     const thousand = Math.floor((num % 100000) / 1000);
+//     const hundred = Math.floor((num % 1000) / 100);
+//     const remainder = num % 100;
 
-    function convertTwoDigits(n) {
-        if (n < 10) return single[n];
-        if (n < 20) return twoDigit[n - 10];
-        return `${tens[Math.floor(n / 10)]} ${single[n % 10]}`.trim();
-    }
-}
+//     if (lakh > 0) words += `${convertTwoDigits(lakh)} Lakh `;
+//     if (thousand > 0) words += `${convertTwoDigits(thousand)} Thousand `;
+//     if (hundred > 0) words += `${single[hundred]} Hundred `;
+//     if (remainder > 0) words += `and ${convertTwoDigits(remainder)} `;
+
+//     return words.trim();
+
+//     function convertTwoDigits(n) {
+//         if (n < 10) return single[n];
+//         if (n < 20) return twoDigit[n - 10];
+//         return `${tens[Math.floor(n / 10)]} ${single[n % 10]}`.trim();
+//     }
+// }
 
 // sahara credit advanced search (POST)
 app.get("/Sahara_Credit", (req, res) => {
