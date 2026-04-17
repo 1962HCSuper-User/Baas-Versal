@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Humara India Pariwar LTD. / Saharayan Universal Multi purpose Ltd.</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    header {
+      background: #004080;
+      color: white;
+      padding: 15px 30px;
+    }
+
+    header h2 {
+      margin: 0;
+    }
+
+    .container {
+      padding: 20px 40px;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+    }
+
+    form input,
+    form button {
+      padding: 10px;
+      margin: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    form button {
+      background: #004080;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background: #0066cc;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .card h3 {
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-item label {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .info-item span {
+      font-weight: bold;
+      color: #222;
+      margin-top: 3px;
+    }
+
+    /* Toggle button */
+    .toggle-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      font-size: 14px;
+      color: #004080;
+      margin-bottom: 10px;
+      user-select: none;
+    }
+
+    .toggle-btn:hover {
+      text-decoration: underline;
+    }
+
+    /* Hidden section */
+    .hidden {
+      display: none;
+    }
+
+    /* Table Styling */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+
+    th {
+      background: #f0f2f5;
+      text-align: left;
+    }
+
+    body {
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      /* clean professional font */
+      color: #222;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 20px;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-item label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .info-item input {
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      background: #fafafa;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .info-item input:focus {
+      background: #fff;
+      border-color: #0077cc;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0, 119, 204, 0.3);
+    }
+
+    .download-btn {
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+
+    .download-btn:hover {
+      background: #218838;
+    }
+  </style>
+  <script>
+    function toggleSection(id, iconId) {
+      const section = document.getElementById(id);
+      const icon = document.getElementById(iconId);
+      if (section.classList.contains("hidden")) {
+        section.classList.remove("hidden");
+        icon.textContent = "🔼";
+      } else {
+        section.classList.add("hidden");
+        icon.textContent = "🔽";
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <header>
+    <h2>Humara India Pariwar LTD. / Saharayan Universal Multi purpose Ltd.</h2>
+  </header>
+
+  <div class="container">
+    <!-- Search Form -->
+    <form action="/accountsearch" method="POST">
+      <input type="text" name="ACCOUNTNAME" placeholder="Enter Account Name">
+      <input type="text" name="ACCNUMBER" placeholder="Enter Account Number">
+      <input type="text" name="RECEIPTNO" placeholder="Enter Receipt No">
+      <button type="submit">Search</button>
+    </form>
+
+    <!-- Account Information (Loop over multiple if search returns more than one) -->
+    <% if (accounts && accounts.length > 0) { %>
+      <% accounts.forEach((acc, index) => { %>
+        <div class="card">
+          <h3>👤 Account Overview - <%= acc.ACCNUMBER %></h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Account No</label>
+              <span><%= acc.ACCNUMBER %></span>
+            </div>
+            <div class="info-item">
+              <label>Account Name</label>
+              <span><%= acc.ACCOUNTNAME %></span>
+            </div>
+            <div class="info-item">
+              <label>Receipt No</label>
+              <span><%= acc.RECEIPTNO %></span>
+            </div>
+            <div class="info-item">
+              <label>Open Date</label>
+              <span><%= acc.ACCOPENDATE %></span>
+            </div>
+          </div>
+
+          <div class="toggle-btn" onclick="toggleSection('moreInfo<%= index %>','iconMore<%= index %>')">
+            <span id="iconMore<%= index %>">🔽</span>&nbsp; View More Details (Editable)
+          </div>
+          <div id="moreInfo<%= index %>" class="hidden">
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Title</label>
+                <input type="text" value="<%= acc.TITLE || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Father/Spouse</label>
+                <input type="text" value="<%= acc.FATHHUSNAME || '' %>">
+              </div>
+              <div class="info-item">
+                <label>DOB</label>
+                <input type="text" value="<%= acc.DATEOFBIRTH || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Age</label>
+                <input type="text" value="<%= acc.AGE || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Occupation</label>
+                <input type="text" value="<%= acc.OCCUPAT || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Local Address</label>
+                <input type="text" value="<%= acc.LOCADDRES || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Permanent Address</label>
+                <input type="text" value="<%= acc.PERMADDR || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Nominee 1</label>
+                <input type="text" value="<%= acc.NOMINEE1 || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Nominee 2</label>
+                <input type="text" value="<%= acc.NOMINEE2 || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Nominee 3</label>
+                <input type="text" value="<%= acc.NOMINEE3 || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Nominee 4</label>
+                <input type="text" value="<%= acc.NOMINEE4 || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Scheme Code</label>
+                <input type="text" value="<%= acc.SCHECODE || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Denomination</label>
+                <input type="text" value="<%= acc.DENOMINATION || '' %>">
+              </div>
+              <div class="info-item">
+                <label>Branch Code</label>
+                <input type="text" value="<%= acc.BRANCHCODE || '' %>">
+              </div>
+              <!-- Add more editable fields as needed for manual filling -->
+              <!-- Missing fields like reference can be added here as inputs for manual entry -->
+            </div>
+          </div>
+
+          <div style="text-align:center;">
+            <button class="download-btn" onclick="handleDownload('<%= acc.ACCNUMBER %>')">
+              ✅ Verify The Account <%= acc.ACCNUMBER %>
+            </button>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <p>No accounts found.</p>
+    <% } %>
+  </div>
+
+  <script>
+    async function handleDownload(accNumber) {
+      try {
+        // Note: Since fields are editable, you may want to collect form data and POST to update before generating
+        // For now, it generates based on DB data (as per API). To include manual changes, extend to POST updates first.
+        const response = await fetch(`/generateFile/${accNumber}`);
+        const data = await response.json();
+
+        if (data.fileName) {
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = "/downloads/" + data.fileName;
+          document.body.appendChild(iframe);
+
+          setTimeout(() => {
+            window.location.href = "/Verify";  // Adjust redirect as needed
+          }, 2000);
+        } else {
+          alert("Error generating file");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error generating file");
+      }
+    }
+  </script>
+</body>
+</html>

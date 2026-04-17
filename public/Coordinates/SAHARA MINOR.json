@@ -1,0 +1,136 @@
+window.dynamicCoordinates = {
+  coordinates: {
+    0: {
+      "Membership no": { coords: [{ pos: [40.09, 583.45], char_spacing: 22, font_size: 16 }] },
+      "Denomination": { coords: [{ pos: [414.94, 587.92], char_spacing: 22, font_size: 16 }] },
+      "Account opening date": { coords: [{ pos: [41.58, 544.03], char_spacing: 22, font_size: 16 }] },
+      "Account no": { coords: [{ pos: [222.31, 545.52], char_spacing: 22, font_size: 16 }] },
+      "Receipt no": { coords: [{ pos: [41.58, 508.33], char_spacing: 22, font_size: 16 }] },
+      "Certificate no": { coords: [{ pos: [307.10, 509.82], char_spacing: 22, font_size: 16 }] },
+      "Full_Name": { coords: [{ pos: [93.64, 472.62], char_spacing: 21, font_size: 16 }] },
+      "Street/Village": { coords: [{ pos: [265.45, 368.49], char_spacing: 22, font_size: 16 }] },
+      "Post": { coords: [{ pos: [61.66, 341.71], char_spacing: 22, font_size: 16 }] },
+      "District": { coords: [{ pos: [265.45, 343.20], char_spacing: 22, font_size: 16 }] },
+      "Pincode": { coords: [{ pos: [439.49, 319.40], char_spacing: 22, font_size: 16 }] },
+      "Mobile no": { coords: [{ pos: [186.61, 291.13], char_spacing: 22, font_size: 16 }] },
+      "Nominee name": { coords: [{ pos: [93.64, 265.10], char_spacing: 22, font_size: 16 }] },
+      "Nominee relation": { coords: [{ pos: [75.79, 235.35], char_spacing: 22, font_size: 16 }] },
+      "Nominee age": { coords: [{ pos: [269.17, 236.09], char_spacing: 22, font_size: 16 }] },
+      "Pan card": { coords: [{ pos: [354.70, 136.70], char_spacing: 22, font_size: 16 }] },
+      "Amount": { coords: [{ pos: [95.13, 108.84], char_spacing: 22, font_size: 16 }] },
+      "Authorised centre code": { coords: [{ pos: [126.37, 652.17], char_spacing: 0, font_size: 10 }] },
+      "Authorised centre name": { coords: [{ pos: [254.29, 652.91], char_spacing: 0, font_size: 10 }] },
+      "Region": { coords: [{ pos: [348.75, 654.40], char_spacing: 0, font_size: 10 }] },
+      "Application no": { coords: [{ pos: [403.79, 624.36], char_spacing: 0, font_size: 16 }] },
+      "State": { coords: [{ pos: [69.10, 314.94], char_spacing: 22, font_size: 16 }] },
+      "Amount in word": { coords: [{ pos: [307.84, 106.71], char_spacing: 0, font_size: 16 }] },
+      "Manager name": { coords: [{ pos: [121.16, 63.71], char_spacing: 0, font_size: 16 }] },
+      "Manager code": { coords: [{ pos: [112.47, 37.81], char_spacing: 22, font_size: 16 }] },
+      "Date of birth": { coords: [{ pos: [89.92, 430.97], char_spacing: 22, font_size: 16 }] },
+      "AGE": { coords: [{ pos: [292.97, 433.20], char_spacing: 22, font_size: 16 }] },
+      "Father/Husband name": { coords: [{ pos: [114.47, 402.71], char_spacing: 22, font_size: 16 }] },
+      "House no": { coords: [{ pos: [84.72, 366.26], char_spacing: 22, font_size: 16 }] }
+    },
+    1: {
+      "Manager name": {
+        coords: [
+          { pos: [40.84, 795.44], char_spacing: 0, font_size: 10 },
+          { pos: [66.87, 689.07], char_spacing: 0, font_size: 10 },
+          { pos: [66.12, 729.75], char_spacing: 0, font_size: 10 },
+          { pos: [384.45, 758.25], char_spacing: 0, font_size: 10 }
+        ]
+      },
+      "Manager code": {
+        coords: [
+          { pos: [249.83, 794.47], char_spacing: 0, font_size: 10 },
+          { pos: [72.08, 674.71], char_spacing: 0, font_size: 10 },
+          { pos: [326.44, 730.50], char_spacing: 0, font_size: 10 },
+          { pos: [57.20, 748.35], char_spacing: 0, font_size: 10 }
+        ]
+      }
+    }
+  },
+
+  field_mapping: {
+    "Account no": "accountNo",
+    "Membership no": "membershipNo",
+    "Full_Name": "fullName",
+    "Account opening date": "accountOpeningDate",
+    "Date of birth": "dateOfBirth",
+    "AGE": "age",
+    "Father/Husband name": "guardianName",
+    "Receipt no": "receiptNo",
+    "Certificate no": "certificateNo",
+    "House no": "houseNo",
+    "Street/Village": "street",
+    "Post": "post",
+    "District": "district",
+    "State": "state",
+    "Pincode": "pincode",
+    "Mobile no": "mobileNo",
+    "Nominee name": "nomineeName",
+    "Nominee relation": "nomineeRelation",
+    "Nominee age": "nomineeAge",
+    "Pan card": "panCard",
+    "Amount": "amount",
+    "Amount in word": "amountInWords",
+    "Application no": "applicationNo",
+    "Denomination": "denomination",
+    "Authorised centre code": "centreCode",
+    "Authorised centre name": "centreName",
+    "Region": "region",
+    "Manager name": "managerName",
+    "Manager code": "managerCode"
+  },
+
+  charSpacedFields: [
+    "Account no",
+    "Membership no",
+    "Full_Name",
+    "Account opening date",
+    "Date of birth",
+    "AGE",
+    "Father/Husband name",
+    "Receipt no",
+    "Certificate no",
+    "House no",
+    "Street/Village",
+    "Post",
+    "District",
+    "State",
+    "Pincode",
+    "Mobile no",
+    "Nominee name",
+    "Nominee relation",
+    "Nominee age",
+    "Pan card",
+    "Amount",
+    "Denomination"
+  ],
+
+  photo_signature: {
+    photo: {
+      0: { x: 428.62, y: 609.89, width: 75, height: 100 }
+    },
+    signature: {
+      0: [
+        { x: 366.42, y: 590.64, width: 110, height: 110 },
+        { x: 334.36, y: 227.43, width: 110, height: 110 }
+      ],
+      1: [
+        { x: 394.86, y: 275.75, width: 110, height: 110 }
+      ]
+    },
+    stamps: {
+      0: [
+        { file: "Sarayan2.png", x: 478, y: 659, width: 100, height: 100 },
+        { file: "Sarayan2.png", x: 245, y: 15, width: 100, height: 100 }
+      ],
+      1: [
+        { file: "Sarayan2.png", x: 240, y: 45, width: 100, height: 100 },
+        { file: "Msing.png", x: 464.32, y: 3, width: 90, height: 90 },
+        { file: "Msin.png", x: 464.32, y: 35, width: 90, height: 90 }
+      ]
+    }
+  }
+};

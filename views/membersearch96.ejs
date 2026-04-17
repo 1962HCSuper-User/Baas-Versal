@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Humara India Pariwar LTD. / Saharayan Universal Multi purpose Ltd.</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <style>
+    body {
+      font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
+      background: #f4f6f9;
+      color: #333;
+    }
+    header {
+      background: #004080;
+      color: white;
+      padding: 15px 30px;
+    }
+    header h2 {
+      margin: 0;
+    }
+    .container {
+      padding: 20px 40px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 25px;
+    }
+    form input,
+    form button {
+      padding: 10px;
+      margin: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    form button {
+      background: #004080;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    form button:hover {
+      background: #0066cc;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    .card h3 {
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 15px;
+      margin-top: 10px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .info-item label {
+      font-size: 12px;
+      color: #555;
+    }
+    .info-item span {
+      font-weight: bold;
+      color: #222;
+      margin-top: 3px;
+    }
+    /* Toggle button */
+    .toggle-btn {
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      font-size: 14px;
+      color: #004080;
+      margin-bottom: 10px;
+      user-select: none;
+    }
+    .toggle-btn:hover {
+      text-decoration: underline;
+    }
+    /* Hidden section */
+    .hidden {
+      display: none;
+    }
+    /* Table Styling */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+    th,
+    td {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    th {
+      background: #f0f2f5;
+      text-align: left;
+    }
+    body {
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      /* clean professional font */
+      color: #222;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin: 20px;
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    .info-item label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      font-size: 14px;
+      color: #444;
+    }
+    .info-item input {
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+      background: #fafafa;
+      transition: all 0.2s ease-in-out;
+    }
+    .info-item input:focus {
+      background: #fff;
+      border-color: #0077cc;
+      outline: none;
+      box-shadow: 0 0 6px rgba(0, 119, 204, 0.3);
+    }
+    .download-btn {
+      background: #28a745;
+      color: white;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .download-btn:hover {
+      background: #218838;
+    }
+
+     /* ====== GLOBAL ====== */
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: 0;
+    }
+
+    /* ====== HEADER ====== */
+    header {
+      background: linear-gradient(90deg, #004080, #0066cc);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ====== NAV ====== */
+    nav {
+      background: #0055aa;
+      display: flex;
+      justify-content: center;
+      padding: 12px 0;
+    }
+
+    nav a {
+      color: white;
+      font-weight: 500;
+      margin: 0 20px;
+      font-size: 15px;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      display: block;
+      height: 2px;
+      background: white;
+      width: 0;
+      transition: width 0.3s ease;
+      margin: 0 auto;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+        /* ====== FOOTER ====== */
+    footer {
+      background: #004080;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 768px) {
+
+      header,
+      main {
+        padding: 20px;
+      }
+
+      nav {
+        flex-wrap: wrap;
+      }
+
+      nav a {
+        margin: 10px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+
+    .quick-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 15px;
+    }
+
+    .link-box {
+      background: #f9fbff;
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      padding: 25px 20px;
+      text-align: center;
+      color: #004080;
+      font-weight: 500;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .link-box .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .link-box:hover {
+      background: #004080;
+      color: white;
+      transform: translateY(-5px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .link-box:hover .icon {
+      transform: scale(1.2) rotate(10deg);
+    }
+  </style>
+  <script>
+    function toggleSection(id, iconId) {
+      const section = document.getElementById(id);
+      const icon = document.getElementById(iconId);
+      if (section.classList.contains("hidden")) {
+        section.classList.remove("hidden");
+        icon.textContent = "🔼";
+      } else {
+        section.classList.add("hidden");
+        icon.textContent = "🔽";
+      }
+    }
+    
+    /* (Removed invalid CSS from <script> tag. If you want to override or add styles, put them in the <style> section above with correct selector syntax, e.g. .info-item not .info - item) */
+  </script>
+</head>
+<body>
+  <header>
+    <h1>Sahara India Pariwar</h1>
+    <span>Secure • Reliable • Professional</span>
+    <h4>Humara India Pariwar LTD. / Saharayan Universal Multi purpose Ltd.</h4>
+
+
+  </header>
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="/">Home</a>
+    <a href="/Sahara_Credit">Sahara Credit Cooperative Society Ltd.</a>
+    <a href="/amount">Deposit Amount Check</a>
+    <a href="/sarayan">Universal</a>
+    <a href="/AddUser">Add user</a>
+
+    <a href="/reports">Other Portal</a>
+    <a href="/about">73 Image View</a>
+
+  </nav>
+
+  </header>
+  <div class="container">
+    <!-- Search Form -->
+    <form action="/membersearch96" method="POST">
+      <input type="text" name="MMBRNO" placeholder="Enter Membership Number">
+      <!-- <input type="text" name="ACCOUNTNAME" placeholder="Enter Account Name"> -->
+      <input type="text" name="ACCNUMBER" placeholder="Enter Account Number">
+      <input type="text" name="PASSBOOKNO" placeholder="Enter Passbook No">
+      <input type="text" name="RECEIPTNO" placeholder="Enter Receipt No">
+      <input type="text" name="APPLNUMBER" placeholder="Enter Application No">
+      <div class="toggle-btn" onclick="toggleSection('depcInfoCard','iconDepc')">
+        <span id="iconDepc">🔽</span>&nbsp; Show Additional Account Info
+      </div>
+      <!-- <input type="date" name="ACCOPENDATE" placeholder="Enter Account Open Date"> -->
+      <button type="submit">Search</button>
+    </form>
+    <% if (notFound) { %>
+      <p>Record not found.</p>
+    <% } %>
+    <div class="card hidden" id="depcInfoCard">
+      <h3>📑 Additional Details</h3>
+      <table id="depcTable">
+        <thead>
+          <tr>
+            <th>Branch Code</th>
+            <th>Account No</th>
+            <th>Date of Birth</th>
+            <th>Age</th>
+            <th>Occupation</th>
+            <th>Father/Spouse</th>
+            <th>Local Address</th>
+            <th>Permanent Address</th>
+            <th>Nominee 1</th>
+            <th>Nominee 2</th>
+            <th>Nominee 3</th>
+            <th>Nominee 4</th>
+            <th>Receipt No</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (typeof depcAccounts !== "undefined" && depcAccounts.length > 0) { %>
+            <% depcAccounts.forEach(d => { %>
+              <tr>
+                <td><%= d.BRANCHCODE %></td>
+                <td><%= d.ACCNUMBER %></td>
+                <td><%= d.DATEOFBIRTH %></td>
+                <td><%= d.AGE %></td>
+                <td><%= d.OCCUPAT %></td>
+                <td><%= d.FATHHUSNAME %></td>
+                <td><%= d.LOCADDRES %></td>
+                <td><%= d.PERMADDR %></td>
+                <td><%= d.NOM1 %></td>
+                <td><%= d.NOM2 %></td>
+                <td><%= d.NOM3 %></td>
+                <td><%= d.NOM4 %></td>
+                <td><%= d.RECEIPTNO %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="13">No additional details found</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+    <!-- Member Information -->
+    <% if (memberInfo) { %>
+      <div class="card">
+        <h3>👤 Member Overview</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>Member No</label>
+            <span><%= memberInfo.MMBRNO %></span>
+          </div>
+          <div class="info-item">
+            <label>Name</label>
+            <span><%= memberInfo.PRIMEMBER_NAM %></span>
+          </div>
+          <div class="info-item">
+            <label>Reg Date</label>
+            <span><%= memberInfo.REGDATE %></span>
+          </div>
+        </div>
+        <div class="toggle-btn" onclick="toggleSection('moreInfo','iconMore')">
+          <span id="iconMore">🔽</span>&nbsp; View More Details
+        </div>
+        <div id="moreInfo" class="hidden">
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Father/Spouse</label>
+              <input type="text" value="<%= memberInfo.FATSPONAME %>">
+            </div>
+            <div class="info-item">
+              <label>DOB</label>
+              <input type="text" value="<%= memberInfo.DOB %>">
+            </div>
+            <div class="info-item">
+              <label>Age</label>
+              <input type="text" value="<%= memberInfo.AGE %>">
+            </div>
+            <div class="info-item">
+              <label>Gender</label>
+              <input type="text" value="<%= memberInfo.GENDER %>">
+            </div>
+            <div class="info-item">
+              <label>Occupation</label>
+              <input type="text" value="<%= memberInfo.OCCUPATION %>">
+            </div>
+            <div class="info-item">
+              <label>Address</label>
+              <input type="text" value="<%= memberInfo.ADDRESS %>, <%= memberInfo.CITY %>, <%= memberInfo.STATE %> - <%= memberInfo.PIN %>">
+            </div>
+            <div class="info-item">
+              <label>PAN</label>
+              <input type="text" value="<%= memberInfo.PANGIRNO %>">
+            </div>
+            <div class="info-item">
+              <label>Mobile</label>
+              <input type="text" value="<%= memberInfo.MOBILENO %>">
+            </div>
+            <div class="info-item">
+              <label>Nominee 1</label>
+              <input type="text" value="<%= memberInfo.NOM1NAME %>">
+            </div>
+            <div class="info-item">
+              <label>Nominee Relation 1</label>
+              <input type="text" value="<%= memberInfo.NOMREL1 %>">
+            </div>
+            <div class="info-item">
+              <label>Proportion 1</label>
+              <input type="text" value="<%= memberInfo.NOM1PROP %>">
+            </div>
+            <div class="info-item">
+              <label>Nominee 1 DOB</label>
+              <input type="text" value="<%= memberInfo.NOM1DOB %>">
+            </div>
+            <div class="info-item">
+              <label>Proportion 2</label>
+              <input type="text" value="<%= memberInfo.NOM2PROP %>">
+            </div>
+            <div class="info-item">
+              <label>Share Amount</label>
+              <input type="text" value="<%= memberInfo.SHAREAMT %>">
+            </div>
+            <div class="info-item">
+              <label>Share Count</label>
+              <input type="text" value="<%= memberInfo.SHARECOUNT %>">
+            </div>
+          </div>
+        </div>
+        <% if (downloadFile) { %>
+          <div style="text-align:center;">
+            <button class="download-btn" onclick="handleDownload('<%= memberInfo.MMBRNO %>')">
+              ✅ Verify The User <%= memberInfo.MMBRNO %>
+            </button>
+          </div>
+        <% } %>
+      </div>
+    <% } %>
+    <!-- Deposit Accounts -->
+    <% if (accounts && accounts.length > 0) { %>
+      <div class="card">
+        <h3>💰 Deposit Accounts</h3>
+        <div class="toggle-btn" onclick="toggleSection('accountTable','iconAcc')">
+          <span id="iconAcc">🔽</span>&nbsp; Show Account Details
+        </div>
+        <div id="accountTable" class="hidden">
+          <table>
+            <tr>
+              <th>BRANCHCODE</th>
+              <th>ACCNUMBER</th>
+              <th>SCHECODE</th>
+              <th>SCVTYPE</th>
+              <th>DEPOSTMODE</th>
+              <th>INTPMODE</th>
+              <th>DAYSOFDEP</th>
+              <th>APPLNUMBER</th>
+              <th>FLDWCODE</th>
+              <th>ACCTRFDATE</th>
+              <th>LAPIRFLAG</th>
+              <th>JOINTFLAG</th>
+              <th>AGNSCOLL</th>
+              <th>MATURDATE</th>
+              <th>NOITEMRET</th>
+              <th>ACCOUNTNAME</th>
+              <th>ACCOPENDATE</th>
+              <th>INTROCODE</th>
+              <th>TITLE</th>
+              <th>ALPHAFLAG</th>
+              <th>PASSBOOKNO</th>
+              <th>RECEIPTNO</th>
+              <th>DENOMINATION</th>
+              <th>SIGFLAG</th>
+              <th>LOANFLAG</th>
+              <th>STFLAG</th>
+              <th>SPCPAID</th>
+              <th>INTROTYPE</th>
+              <th>EFFECTIVEDATE</th>
+            </tr>
+            <% accounts.forEach(acc => { %>
+              <tr>
+                <td><%= acc.BRANCHCODE %></td>
+                <td><%= acc.ACCNUMBER %></td>
+                <td><%= acc.SCHECODE %></td>
+                <td><%= acc.SCVTYPE %></td>
+                <td><%= acc.DEPOSTMODE %></td>
+                <td><%= acc.INTPMODE %></td>
+                <td><%= acc.DAYSOFDEP %></td>
+                <td><%= acc.APPLNUMBER %></td>
+                <td><%= acc.FLDWCODE %></td>
+                <td><%= acc.ACCTRFDATE %></td>
+                <td><%= acc.LAPIRFLAG %></td>
+                <td><%= acc.JOINTFLAG %></td>
+                <td><%= acc.AGNSCOLL %></td>
+                <td><%= acc.MATURDATE %></td>
+                <td><%= acc.NOITEMRET %></td>
+                <td><%= acc.ACCOUNTNAME %></td>
+                <td><%= acc.ACCOPENDATE %></td>
+                <td><%= acc.INTROCODE %></td>
+                <td><%= acc.TITLE %></td>
+                <td><%= acc.ALPHAFLAG %></td>
+                <td><%= acc.NPBKORCERTNUM %></td>
+                <td><%= acc.RECEIPTNO %></td>
+                <td><%= acc.DENOMINATION %></td>
+                <td><%= acc.SIGFLAG %></td>
+                <td><%= acc.LOANFLAG %></td>
+                <td><%= acc.STFLAG %></td>
+                <td><%= acc.SPCPAID %></td>
+                <td><%= acc.INTROTYPE %></td>
+                <td><%= acc.EFFECTIVEDATE %></td>
+              </tr>
+            <% }) %>
+          </table>
+        </div>
+      </div>
+    <% } else if (member) { %>
+      <p>No deposit accounts found for Member <%= member %>.</p>
+    <% } %>
+  </div>
+  <script>
+    async function handleDownload(memberNo) {
+      try {
+        // Call the /generateFile96 endpoint to create the text file
+        const response = await fetch(`/generateFile96/${memberNo}`);
+        const data = await response.json();
+        if (data.fileName) {
+          // Trigger file download using hidden iframe
+          const iframe = document.createElement("iframe");
+          iframe.style.display = "none";
+          iframe.src = "/downloads/" + data.fileName;
+          document.body.appendChild(iframe);
+          // After a small delay (to ensure download starts), redirect to /Verify
+          setTimeout(() => {
+            window.location.href = "/Verify";
+          }, 2000); // 2 seconds delay (adjust if needed)
+        } else {
+          alert("Error generating file");
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("Error generating file");
+      }
+    }
+  </script>
+</body>
+</html>

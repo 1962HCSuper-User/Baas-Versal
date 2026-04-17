@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coordinate Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+        }
+
+        #pdfCanvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: auto;
+        }
+
+        .marker {
+            position: absolute;
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-size: 10px;
+            color: #fff;
+            cursor: move;
+            user-select: none;
+        }
+
+        .marker.red {
+            background: rgba(255, 0, 0, 0.6);
+        }
+
+        .marker.blue {
+            background: rgba(0, 0, 255, 0.6);
+        }
+
+        .marker.green {
+            background: rgba(0, 255, 0, 0.6);
+        }
+
+        .marker.purple {
+            background: rgba(128, 0, 128, 0.6);
+        }
+
+        #editorContainer {
+            position: relative;
+            display: inline-block;
+        }
+
+        #controls {
+            margin: 10px 0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>PDF Coordinate Editor (Preview Mode)</h2>
+
+    <div id="controls">
+        <label>Select PDF:</label>
+        <select id="pdfSelect"></select>
+        <button id="loadPdf">Load PDF</button>
+        <button id="exportJson">Download Updated Coordinates</button>
+    </div>
+
+    <div id="editorContainer">
+        <canvas id="pdfCanvas"></canvas>
+    </div>
+    <div id="pageControls">
+        <button id="prevPage">Previous</button>
+        <span>Page: <span id="pageNum">1</span> / <span id="pageCount">0</span></span>
+        <button id="nextPage">Next</button>
+    </div>
+
+    <h3>Live JSON Preview:</h3>
+    <textarea id="jsonOutput" readonly></textarea>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script>
+        let pdfDoc = null;
+        let pageNum = 1;
+        let scale = 1.2;
+        let coordinates = {};
+        let field_mapping = {};
+        let charSpacedFields = [];
+        let photo_signature = {};
+        let currentBaseName = "";
+
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('editorContainer');
+
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            drawMarkers(num - 1);
+
+            // update UI
+            document.getElementById("pageNum").textContent = num;
+        }
+
+        document.getElementById("prevPage").addEventListener("click", () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            renderPage(pageNum);
+        });
+
+        document.getElementById("nextPage").addEventListener("click", () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            renderPage(pageNum);
+        });
+
+        document.getElementById("loadPdf").addEventListener("click", async () => {
+            const pdfName = document.getElementById("pdfSelect").value;
+            if (!pdfName) return alert("Select a PDF first");
+
+            currentBaseName = pdfName.replace(/\.pdf$/i, "");
+
+            const pdfUrl = `Pdf/${encodeURIComponent(pdfName)}`;
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            pdfDoc = await loadingTask.promise;
+
+            // update page count
+            document.getElementById("pageCount").textContent = pdfDoc.numPages;
+
+            await loadCoordinatesForPDF(currentBaseName);
+            pageNum = 1;
+            await renderPage(pageNum);
+        });
+
+        function drawMarkers(pageIndex) {
+            document.querySelectorAll('.marker').forEach(m => m.remove());
+            if (!coordinates[pageIndex]) return;
+
+            const page = pdfDoc.getPage(pageIndex + 1); // pageIndex is 0-based
+            page.then(p => {
+                const viewport = p.getViewport({ scale });
+
+                // Fields
+                for (let field in coordinates[pageIndex]) {
+                    coordinates[pageIndex][field].coords.forEach((coord, i) => {
+                        // coords stored in PDF user space units (original PDF size)
+                        const x = coord.pos[0] * scale;
+                        const y = coord.pos[1] * scale;
+                        addMarker(field, x, y, pageIndex, i, 40, 15, "red");
+                    });
+                }
+
+                // Photo
+                if (photo_signature.photo?.[pageIndex]) {
+                    const p = photo_signature.photo[pageIndex];
+                    addMarker("photo", p.x * scale, p.y * scale, pageIndex, 0, p.width * scale, p.height * scale, "blue");
+                }
+
+                // Signature
+                if (photo_signature.signature?.[pageIndex]) {
+                    photo_signature.signature[pageIndex].forEach((s, i) =>
+                        addMarker("signature", s.x * scale, s.y * scale, pageIndex, i, s.width * scale, s.height * scale, "green")
+                    );
+                }
+
+                // Stamps
+                if (photo_signature.stamps?.[pageIndex]) {
+                    photo_signature.stamps[pageIndex].forEach((s, i) =>
+                        addMarker("stamp", s.x * scale, s.y * scale, pageIndex, i, s.width * scale, s.height * scale, "purple")
+                    );
+                }
+
+                updateJson();
+            });
+        }
+
+        function addMarker(label, x, y, pageIndex, index, w = 40, h = 15, color = "red") {
+            const marker = document.createElement('div');
+            marker.className = `marker ${color}`;
+            marker.style.left = `${x}px`;
+            marker.style.bottom = `${y}px`; // PDF-lib uses bottom-left origin
+            marker.style.width = w + "px";
+            marker.style.height = h + "px";
+            marker.textContent = label;
+
+            marker.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const data = { label, pageIndex, index, type: label };
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const origLeft = parseFloat(marker.style.left);
+                const origBottom = parseFloat(marker.style.bottom);
+
+                const onMove = (e) => {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    marker.style.left = `${origLeft + dx}px`;
+                    marker.style.bottom = `${origBottom - dy}px`;
+                };
+
+                const onUp = (e) => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+
+                    // Update coords
+                    const newLeft = parseFloat(marker.style.left);
+                    const newBottom = parseFloat(marker.style.bottom);
+                    const xPdf = newLeft / scale;
+                    const yPdf = newBottom / scale;
+
+                    if (data.type === "photo") {
+                        photo_signature.photo[data.pageIndex].x = xPdf;
+                        photo_signature.photo[data.pageIndex].y = yPdf;
+                    } else if (data.type === "signature") {
+                        photo_signature.signature[data.pageIndex][data.index].x = xPdf;
+                        photo_signature.signature[data.pageIndex][data.index].y = yPdf;
+                    } else if (data.type === "stamp") {
+                        photo_signature.stamps[data.pageIndex][data.index].x = xPdf;
+                        photo_signature.stamps[data.pageIndex][data.index].y = yPdf;
+                    } else {
+                        coordinates[data.pageIndex][data.label].coords[data.index].pos = [xPdf, yPdf];
+                    }
+
+                    updateJson();
+                };
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            container.appendChild(marker);
+        }
+
+        function updateJson() {
+            document.getElementById("jsonOutput").value =
+                `window.dynamicCoordinates = ${JSON.stringify({
+                    coordinates, field_mapping, charSpacedFields, photo_signature
+                }, null, 2)};`;
+        }
+
+        // Load PDF lists
+        window.addEventListener("DOMContentLoaded", async () => {
+            const select = document.getElementById("pdfSelect");
+            try {
+                const response = await fetch("/api/pdf-list");
+                const pdfs = await response.json();
+                pdfs.forEach(pdf => {
+                    const option = document.createElement("option");
+                    option.value = pdf;
+                    option.textContent = pdf;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                alert("Failed to load PDF list");
+                console.error(err);
+            }
+        });
+
+        async function loadCoordinatesForPDF(baseName) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `Coordinates/${baseName}.js?cacheBust=${Date.now()}`;
+                script.onload = () => {
+                    if (window.dynamicCoordinates) {
+                        coordinates = window.dynamicCoordinates.coordinates;
+                        field_mapping = window.dynamicCoordinates.field_mapping;
+                        charSpacedFields = window.dynamicCoordinates.charSpacedFields;
+                        photo_signature = window.dynamicCoordinates.photo_signature;
+                        window.dynamicCoordinates = null;
+                        updateJson();
+                        resolve();
+                    } else reject(new Error("No coordinates found"));
+                };
+                script.onerror = () => reject(new Error("Failed to load coordinates"));
+                document.body.appendChild(script);
+            });
+        }
+
+        document.getElementById("exportJson").addEventListener("click", () => {
+            if (!currentBaseName) {
+                alert("Load a PDF first");
+                return;
+            }
+            const json = document.getElementById("jsonOutput").value;
+            const blob = new Blob([json], { type: "application/javascript" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${currentBaseName}.js`;
+            link.click();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Account Search</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+</head>
+<body>
+  <h2>Search Account by Number</h2>
+
+ <% if (typeof error !== 'undefined' && error) { %>
+  <p style="color: red;"><%= error %></p>
+<% } %>
+
+  <form action="/search" method="POST">
+    <label>Account Number:</label>
+    <input type="text" name="accnumber" required>
+    <button type="submit">Search</button>
+  </form>
+</body>
+</html>

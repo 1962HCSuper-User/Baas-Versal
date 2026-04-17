@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Coordinate Editor and Filler</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+        }
+
+        #pdfCanvas {
+            border: 1px solid #ccc;
+            display: block;
+            margin: auto;
+        }
+
+        .marker {
+            position: absolute;
+            border: 1px solid #000;
+            padding: 2px 5px;
+            font-size: 10px;
+            color: #fff;
+            cursor: move;
+            user-select: none;
+        }
+
+        .marker.red {
+            background: rgba(255, 0, 0, 0.6);
+        }
+
+        .marker.blue {
+            background: rgba(0, 0, 255, 0.6);
+        }
+
+        .marker.green {
+            background: rgba(0, 255, 0, 0.6);
+        }
+
+        .marker.purple {
+            background: rgba(128, 0, 128, 0.6);
+        }
+
+        .marker.orange {
+            background: rgba(255, 165, 0, 0.6);
+        }
+
+        #editorContainer {
+            position: relative;
+            display: inline-block;
+        }
+
+        #controls {
+            margin: 10px 0;
+        }
+
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+
+        .control-group {
+            margin: 5px 0;
+        }
+
+        .partition-line {
+            stroke: #000;
+            stroke-width: 1;
+            fill: none;
+        }
+
+        #adjustControls input, #adjustControls select {
+            margin: 0 5px;
+        }
+
+        #directUpdateBtn {
+            margin: 10px 0;
+            padding: 5px 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #directUpdatePanel {
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>PDF Coordinate Editor and Filler</h2>
+
+    <div id="controls">
+        <label>Select PDF:</label>
+        <select id="pdfSelect"></select>
+        <button id="loadPdf">Load PDF</button>
+        <button id="addFieldBtn">Add New Field</button>
+        <button id="exportJson">Download Updated Coordinates</button>
+        <button id="directUpdateBtn">Direct Update Coordinates</button>
+    </div>
+
+    <div id="directUpdatePanel">
+        <h3>Direct Coordinate Update</h3>
+        <label>Field Name: <input type="text" id="directFieldName"></label>
+        <label>Page Index: <input type="number" id="directPageIndex" min="0"></label>
+        <label>Coord Index: <input type="number" id="directCoordIndex" min="0" value="0"></label>
+        <label>X: <input type="number" id="directX" step="0.1"></label>
+        <label>Y: <input type="number" id="directY" step="0.1"></label>
+        <button id="applyDirectUpdate">Apply Update</button>
+    </div>
+
+    <div id="previewControls">
+        <label>Upload Data File:</label><input type="file" id="txtUpload" accept=".txt,.data">
+        <label>Upload Photo:</label><input type="file" id="photoUpload" accept="image/*">
+        <label>Upload Signature:</label><input type="file" id="sigUpload" accept="image/*">
+        <button id="previewBtn">Download Filled PDF(s)</button>
+    </div>
+
+    <div id="editorContainer">
+        <canvas id="pdfCanvas"></canvas>
+    </div>
+    <div id="pageControls">
+        <button id="prevPage">Previous</button>
+        <span>Page: <span id="pageNum">1</span> / <span id="pageCount">0</span></span>
+        <button id="nextPage">Next</button>
+    </div>
+    <div id="adjustControls" style="margin:10px 0; display:none;">
+        <h3>Adjust Settings</h3>
+        <div class="control-group">
+            <label>X: <input type="number" id="xInput" step="0.1"></label>
+            <label>Y: <input type="number" id="yInput" step="0.1"></label>
+        </div>
+        <div class="control-group">
+            <label>Font Size: <input type="number" id="fontSizeInput" step="0.5"></label>
+            <label>Char Spacing: <input type="number" id="charSpacingInput" step="0.5"></label>
+            <label>Rotate (deg): <input type="number" id="rotateInput" step="1"></label>
+        </div>
+        <div class="control-group">
+            <label>Char Spaced: <input type="checkbox" id="isSpacedInput"></label>
+            <label>Max Chars: <input type="number" id="maxCharsInput" step="1"></label>
+            <label>Draw Box: <input type="checkbox" id="drawBoxInput"></label>
+        </div>
+        <div class="control-group">
+            <label>Width: <input type="number" id="widthInput" step="1"></label>
+            <label>Height: <input type="number" id="heightInput" step="1"></label>
+        </div>
+        <button id="deleteBtn">Delete Field/Coord</button>
+        <button id="addCoordBtn" style="display:none;">Add New Coord</button>
+    </div>
+
+    <h3>Live JSON Preview:</h3>
+    <textarea id="jsonOutput" readonly></textarea>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+    <script src="https://unpkg.com/@pdf-lib/upng@1.0.1/build/upng.min.js"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js";
+
+        let pdfDoc = null;
+        let pageNum = 1;
+        let scale = 1.2;
+        let coordinates = {};
+        let connectedFields = {}; // {fieldName: {dataKey: string, partitions: [{pageIndex: num, pos: [x,y], maxChars: num, font_size: num, char_spacing: num, rotate: num, drawBox: bool, width: num, height: num}, ...]}}
+        let field_mapping = {};
+        let charSpacedFields = []; // Now supports both regular and connected field names
+        let photo_signature = {};
+        let currentBaseName = "";
+        let parsedForms = [];
+        let photoImg = null;
+        let sigImg = null;
+        let stampImgs = {};
+
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('editorContainer');
+
+        async function renderPage(num) {
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            drawOverlays(page, viewport);
+            drawMarkers(num - 1);
+
+            document.getElementById("pageNum").textContent = num;
+        }
+
+        function drawOverlays(page, viewport) {
+            ctx.fillStyle = 'black';
+
+            const pageIndex = pageNum - 1;
+            const hasData = parsedForms.length > 0 && parsedForms[0];
+
+            // Regular fields with multiple coords
+            if (coordinates[pageIndex]) {
+                for (const field in coordinates[pageIndex]) {
+                    const f = coordinates[pageIndex][field];
+                    const key = field_mapping[field] || field;
+                    let value = hasData ? (parsedForms[0][key] || '') : (charSpacedFields.includes(field) ? 'Sample Spaced Text' : 'Sample Text');
+                    f.coords.forEach(coord => {
+                        if (value && coord.pos) {
+                            drawTextWithRotation(ctx, viewport, coord, value, scale, field);
+                        }
+                        if (coord.drawBox) {
+                            drawBox(ctx, viewport, coord, scale);
+                        }
+                    });
+                }
+            }
+
+            // Connected fields with partitions
+            for (const field in connectedFields) {
+                const conn = connectedFields[field];
+                const key = conn.dataKey || field;
+                let fullValue = hasData ? (parsedForms[0][key] || '') : 'Sample Connected Text Here With Overflow To Partitions';
+                let remaining = fullValue;
+                conn.partitions.forEach(partition => {
+                    if (partition.pageIndex !== pageIndex) return;
+                    const maxChars = partition.maxChars || Infinity;
+                    const partValue = remaining.slice(0, maxChars);
+                    remaining = remaining.slice(maxChars);
+                    if (partValue && partition.pos) {
+                        drawTextWithRotation(ctx, viewport, partition, partValue, scale, field);
+                    }
+                    if (partition.drawBox) {
+                        drawBox(ctx, viewport, partition, scale);
+                    }
+                });
+            }
+
+            // Photo, Signature, Stamps (unchanged from previous)
+            if (photo_signature.photo && photo_signature.photo[pageIndex] && photoImg?.complete) {
+                const p = photo_signature.photo[pageIndex];
+                const [cx, cy_bottom] = viewport.convertToViewportPoint(p.x, p.y);
+                const h_view = p.height * scale;
+                const w_view = p.width * scale;
+                const cy_top = cy_bottom - h_view;
+                ctx.drawImage(photoImg, cx, cy_top, w_view, h_view);
+            }
+
+            if (photo_signature.signature && photo_signature.signature[pageIndex] && sigImg?.complete) {
+                photo_signature.signature[pageIndex].forEach(s => {
+                    const [cx, cy_bottom] = viewport.convertToViewportPoint(s.x, s.y);
+                    const h_view = s.height * scale;
+                    const w_view = s.width * scale;
+                    const cy_top = cy_bottom - h_view;
+                    ctx.drawImage(sigImg, cx, cy_top, w_view, h_view);
+                });
+            }
+
+            if (photo_signature.stamps && photo_signature.stamps[pageIndex]) {
+                photo_signature.stamps[pageIndex].forEach(s => {
+                    const img = stampImgs[s.file];
+                    if (img?.complete) {
+                        const [cx, cy_bottom] = viewport.convertToViewportPoint(s.x, s.y);
+                        const h_view = s.height * scale;
+                        const w_view = s.width * scale;
+                        const cy_top = cy_bottom - h_view;
+                        ctx.drawImage(img, cx, cy_top, w_view, h_view);
+                    }
+                });
+            }
+        }
+
+        function drawTextWithRotation(ctx, viewport, coord, value, scale, fieldName) {
+            const [cx, cy] = viewport.convertToViewportPoint(coord.pos[0], coord.pos[1]);
+            const size = (coord.font_size || 10) * scale;
+            ctx.save();
+            ctx.font = `${size}px Arial`;
+            ctx.translate(cx, cy);
+            if (coord.rotate) {
+                ctx.rotate((coord.rotate * Math.PI) / 180);
+            }
+            if (charSpacedFields.includes(fieldName)) {
+                let currentX = 0;
+                const chars = value.split('');
+                for (let char of chars) {
+                    ctx.fillText(char, currentX, 0);
+                    currentX += (coord.char_spacing || 10) * scale;
+                }
+            } else {
+                ctx.fillText(value, 0, 0);
+            }
+            ctx.restore();
+        }
+
+        function drawBox(ctx, viewport, coord, scale) {
+            const [x1, y1] = viewport.convertToViewportPoint(coord.pos[0], coord.pos[1]);
+            const w = (coord.width || 100) * scale;
+            const h = (coord.height || 20) * scale;
+            const [x2, y2] = viewport.convertToViewportPoint(coord.pos[0] + w, coord.pos[1] - h);
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x1, y2, x2 - x1, y1 - y2);
+        }
+
+        // Event listeners for page navigation (unchanged)
+        document.getElementById("prevPage").addEventListener("click", () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            renderPage(pageNum);
+        });
+
+        document.getElementById("nextPage").addEventListener("click", () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            renderPage(pageNum);
+        });
+
+        // Load PDF (unchanged, but add connectedFields load)
+        document.getElementById("loadPdf").addEventListener("click", async () => {
+            const pdfName = document.getElementById("pdfSelect").value;
+            if (!pdfName) return alert("Select a PDF first");
+
+            currentBaseName = pdfName.replace(/\.pdf$/i, "");
+
+            const pdfUrl = `Pdf/${encodeURIComponent(pdfName)}`;
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            pdfDoc = await loadingTask.promise;
+
+            document.getElementById("pageCount").textContent = pdfDoc.numPages;
+
+            await loadCoordinatesForPDF(currentBaseName);
+            await loadStamps();
+            pageNum = 1;
+            await renderPage(pageNum);
+        });
+
+        function drawMarkers(pageIndex) {
+            document.querySelectorAll('.marker').forEach(m => m.remove());
+
+            // Regular fields multiple coords
+            if (coordinates[pageIndex]) {
+                for (let field in coordinates[pageIndex]) {
+                    const f = coordinates[pageIndex][field];
+                    f.coords.forEach((coord, idx) => {
+                        if (coord.pos) {
+                            const x = coord.pos[0] * scale;
+                            const y = coord.pos[1] * scale;
+                            addMarker(field, x, y, pageIndex, idx, 40, 15, "red", field, 'regular');
+                        }
+                    });
+                }
+            }
+
+            // Connected fields partitions
+            for (let field in connectedFields) {
+                const conn = connectedFields[field];
+                conn.partitions.forEach((partition, idx) => {
+                    if (partition.pageIndex === pageIndex && partition.pos) {
+                        const x = partition.pos[0] * scale;
+                        const y = partition.pos[1] * scale;
+                        addMarker(field, x, y, pageIndex, idx, 40, 15, "orange", field, 'connected');
+                    }
+                });
+            }
+
+            // Photo, Signature, Stamps markers (unchanged)
+            if (photo_signature.photo && photo_signature.photo[pageIndex]) {
+                const p = photo_signature.photo[pageIndex];
+                addMarker("photo", p.x * scale, p.y * scale, pageIndex, 0, p.width * scale, p.height * scale, "blue", "photo");
+            }
+
+            if (photo_signature.signature && photo_signature.signature[pageIndex]) {
+                photo_signature.signature[pageIndex].forEach((s, i) =>
+                    addMarker("signature", s.x * scale, s.y * scale, pageIndex, i, s.width * scale, s.height * scale, "green", "signature")
+                );
+            }
+
+            if (photo_signature.stamps && photo_signature.stamps[pageIndex]) {
+                photo_signature.stamps[pageIndex].forEach((s, i) =>
+                    addMarker(`stamp: ${s.file}`, s.x * scale, s.y * scale, pageIndex, i, s.width * scale, s.height * scale, "purple", "stamp")
+                );
+            }
+
+            updateJson();
+        }
+
+        let selectedMarkerData = null;
+
+        function addMarker(label, x, y, pageIndex, index, w = 40, h = 15, color = "red", type = label, fieldType = 'regular') {
+            const marker = document.createElement('div');
+            marker.className = `marker ${color}`;
+            marker.style.left = `${x}px`;
+            marker.style.bottom = `${y}px`;
+            marker.style.width = `${w}px`;
+            marker.style.height = `${h}px`;
+            marker.textContent = `${label} #${index + 1}`;
+
+            marker.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedMarkerData = { label, pageIndex, index, type, fieldType };
+                showAdjustControls(selectedMarkerData);
+            });
+
+            marker.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const data = { label, pageIndex, index, type, fieldType };
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const origLeft = parseFloat(marker.style.left);
+                const origBottom = parseFloat(marker.style.bottom);
+
+                const onMove = (e) => {
+                    const dx = e.clientX - startX;
+                    const dy = e.clientY - startY;
+                    marker.style.left = `${origLeft + dx}px`;
+                    marker.style.bottom = `${origBottom - dy}px`;
+                };
+
+                const onUp = (e) => {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+
+                    const newLeft = parseFloat(marker.style.left);
+                    const newBottom = parseFloat(marker.style.bottom);
+                    const xPdf = newLeft / scale;
+                    const yPdf = newBottom / scale;
+
+                    updateCoordPosition(data, xPdf, yPdf);
+
+                    updateJson();
+                    renderPage(pageNum);
+                };
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+
+            container.appendChild(marker);
+        }
+
+        function updateCoordPosition(data, x, y) {
+            if (data.fieldType === 'regular' && data.index !== undefined) {
+                if (!coordinates[data.pageIndex][data.label].coords[data.index]) {
+                    coordinates[data.pageIndex][data.label].coords[data.index] = {};
+                }
+                coordinates[data.pageIndex][data.label].coords[data.index].pos = [x, y];
+            } else if (data.fieldType === 'connected') {
+                if (!connectedFields[data.label].partitions[data.index]) {
+                    connectedFields[data.label].partitions[data.index] = {};
+                }
+                connectedFields[data.label].partitions[data.index].pos = [x, y];
+            } else if (data.type === "photo") {
+                photo_signature.photo[data.pageIndex].x = x;
+                photo_signature.photo[data.pageIndex].y = y;
+            } else if (data.type === "signature") {
+                photo_signature.signature[data.pageIndex][data.index].x = x;
+                photo_signature.signature[data.pageIndex][data.index].y = y;
+            } else if (data.type === "stamp") {
+                photo_signature.stamps[data.pageIndex][data.index].x = x;
+                photo_signature.stamps[data.pageIndex][data.index].y = y;
+            } else if (data.fieldType === 'regular') {
+                // For single coord case
+                coordinates[data.pageIndex][data.label].coords[0].pos = [x, y];
+            }
+        }
+
+        function showAdjustControls(data) {
+            const panel = document.getElementById("adjustControls");
+            panel.style.display = "block";
+
+            const isText = (data.type !== "photo" && data.type !== "signature" && data.type !== "stamp" && (data.fieldType === 'regular' || data.fieldType === 'connected'));
+            const isConnected = data.fieldType === 'connected';
+
+            let x = "", y = "", fontSize = "", charSpacing = "", rotate = "", width = "", height = "", isSpaced = false, maxChars = "", drawBox = false;
+
+            if (isText) {
+                let coord;
+                if (isConnected) {
+                    coord = connectedFields[data.label].partitions[data.index] || {};
+                } else {
+                    coord = coordinates[data.pageIndex][data.label].coords[data.index] || coordinates[data.pageIndex][data.label].coords[0] || {};
+                }
+                x = coord.pos ? coord.pos[0] : '';
+                y = coord.pos ? coord.pos[1] : '';
+                fontSize = coord.font_size || 10;
+                charSpacing = coord.char_spacing || 0;
+                rotate = coord.rotate || 0;
+                isSpaced = charSpacedFields.includes(data.label);
+                maxChars = coord.maxChars || '';
+                drawBox = coord.drawBox || false;
+                width = coord.width || '';
+                height = coord.height || '';
+                document.getElementById('addCoordBtn').style.display = isConnected ? 'none' : 'inline-block';
+            } else {
+                let obj;
+                if (data.type === "photo") {
+                    obj = photo_signature.photo[data.pageIndex];
+                } else if (data.type === "signature") {
+                    obj = photo_signature.signature[data.pageIndex][data.index];
+                } else if (data.type === "stamp") {
+                    obj = photo_signature.stamps[data.pageIndex][data.index];
+                }
+                x = obj ? obj.x : '';
+                y = obj ? obj.y : '';
+                width = obj ? obj.width : '';
+                height = obj ? obj.height : '';
+                document.getElementById('addCoordBtn').style.display = 'none';
+            }
+
+            document.getElementById("xInput").value = x;
+            document.getElementById("yInput").value = y;
+            document.getElementById("fontSizeInput").value = fontSize;
+            document.getElementById("charSpacingInput").value = charSpacing;
+            document.getElementById("rotateInput").value = rotate;
+            document.getElementById("widthInput").value = width;
+            document.getElementById("heightInput").value = height;
+            document.getElementById("isSpacedInput").checked = isSpaced;
+            document.getElementById("maxCharsInput").value = maxChars;
+            document.getElementById("drawBoxInput").checked = drawBox;
+
+            // Enable/disable inputs
+            ['fontSizeInput', 'charSpacingInput', 'rotateInput', 'isSpacedInput', 'maxCharsInput', 'drawBoxInput'].forEach(id => {
+                document.getElementById(id).disabled = !isText;
+            });
+            ['widthInput', 'heightInput'].forEach(id => {
+                document.getElementById(id).disabled = isText;
+            });
+            document.getElementById('xInput').disabled = false;
+            document.getElementById('yInput').disabled = false;
+            document.getElementById('charSpacingInput').disabled = !isSpaced;
+        }
+
+        function applyAdjust() {
+            if (!selectedMarkerData) return;
+
+            const data = selectedMarkerData;
+            const isText = (data.type !== "photo" && data.type !== "signature" && data.type !== "stamp" && (data.fieldType === 'regular' || data.fieldType === 'connected'));
+            const isConnected = data.fieldType === 'connected';
+            const x = parseFloat(document.getElementById("xInput").value);
+            const y = parseFloat(document.getElementById("yInput").value);
+            const fontSize = parseFloat(document.getElementById("fontSizeInput").value);
+            const charSpacing = parseFloat(document.getElementById("charSpacingInput").value);
+            const rotate = parseFloat(document.getElementById("rotateInput").value);
+            const width = parseFloat(document.getElementById("widthInput").value);
+            const height = parseFloat(document.getElementById("heightInput").value);
+            const isSpaced = document.getElementById('isSpacedInput').checked;
+            const maxChars = parseInt(document.getElementById("maxCharsInput").value);
+            const drawBox = document.getElementById('drawBoxInput').checked;
+
+            if (!isNaN(x) && !isNaN(y)) {
+                updateCoordPosition(data, x, y);
+            }
+
+            if (isText) {
+                let coord;
+                if (isConnected) {
+                    coord = connectedFields[data.label].partitions[data.index] || {};
+                    if (!coord.pos) coord.pos = [0, 0];
+                } else {
+                    let coords = coordinates[data.pageIndex][data.label].coords;
+                    coord = coords[data.index] || coords[0] || {};
+                    if (!coord.pos) coord.pos = [0, 0];
+                }
+                if (!isNaN(fontSize)) coord.font_size = fontSize;
+                if (!isNaN(charSpacing)) coord.char_spacing = charSpacing;
+                if (!isNaN(rotate)) coord.rotate = rotate;
+                if (!isNaN(maxChars)) coord.maxChars = maxChars;
+                coord.drawBox = drawBox;
+                if (!isNaN(width)) coord.width = width;
+                if (!isNaN(height)) coord.height = height;
+                document.getElementById('charSpacingInput').disabled = !isSpaced;
+                const fieldName = data.label;
+                if (isSpaced) {
+                    if (!charSpacedFields.includes(fieldName)) charSpacedFields.push(fieldName);
+                } else {
+                    const i = charSpacedFields.indexOf(fieldName);
+                    if (i > -1) charSpacedFields.splice(i, 1);
+                }
+                // Update back
+                if (isConnected) {
+                    connectedFields[data.label].partitions[data.index] = coord;
+                } else {
+                    let coords = coordinates[data.pageIndex][data.label].coords;
+                    if (data.index !== undefined) {
+                        coords[data.index] = coord;
+                    } else {
+                        coords[0] = coord;
+                    }
+                }
+            } else {
+                let obj;
+                if (data.type === "photo") {
+                    obj = photo_signature.photo[data.pageIndex];
+                } else if (data.type === "signature") {
+                    obj = photo_signature.signature[data.pageIndex][data.index];
+                } else if (data.type === "stamp") {
+                    obj = photo_signature.stamps[data.pageIndex][data.index];
+                }
+                if (!isNaN(width)) obj.width = width;
+                if (!isNaN(height)) obj.height = height;
+            }
+
+            updateJson();
+            renderPage(pageNum);
+        }
+
+        // Event listeners for adjust inputs
+        ['xInput', 'yInput', 'fontSizeInput', 'charSpacingInput', 'rotateInput', 'widthInput', 'heightInput', 'maxCharsInput'].forEach(id => {
+            document.getElementById(id).addEventListener("input", applyAdjust);
+        });
+        ['isSpacedInput', 'drawBoxInput'].forEach(id => {
+            document.getElementById(id).addEventListener("change", applyAdjust);
+        });
+
+        // Delete button (updated for multiple coords and connected)
+        document.getElementById("deleteBtn").addEventListener("click", () => {
+            if (!selectedMarkerData) return;
+            const data = selectedMarkerData;
+            if (data.fieldType === 'regular') {
+                let coords = coordinates[data.pageIndex][data.label].coords;
+                if (data.index !== undefined) {
+                    coords.splice(data.index, 1);
+                } else {
+                    coords = []; // For single
+                }
+                if (coords.length === 0) {
+                    delete coordinates[data.pageIndex][data.label];
+                    if (Object.keys(coordinates[data.pageIndex]).length === 0) delete coordinates[data.pageIndex];
+                    delete field_mapping[data.label];
+                    const i = charSpacedFields.indexOf(data.label);
+                    if (i > -1) charSpacedFields.splice(i, 1);
+                } else {
+                    coordinates[data.pageIndex][data.label].coords = coords;
+                }
+            } else if (data.fieldType === 'connected') {
+                connectedFields[data.label].partitions.splice(data.index, 1);
+                if (connectedFields[data.label].partitions.length === 0) {
+                    delete connectedFields[data.label];
+                }
+            } else if (data.type === "photo") {
+                delete photo_signature.photo[data.pageIndex];
+            } else if (data.type === "signature") {
+                photo_signature.signature[data.pageIndex].splice(data.index, 1);
+                if (photo_signature.signature[data.pageIndex].length === 0) delete photo_signature.signature[data.pageIndex];
+            } else if (data.type === "stamp") {
+                photo_signature.stamps[data.pageIndex].splice(data.index, 1);
+                if (photo_signature.stamps[data.pageIndex].length === 0) delete photo_signature.stamps[data.pageIndex];
+            }
+            selectedMarkerData = null;
+            document.getElementById('adjustControls').style.display = 'none';
+            renderPage(pageNum);
+            updateJson();
+        });
+
+        // Add new coord button
+        document.getElementById("addCoordBtn").addEventListener("click", () => {
+            if (!selectedMarkerData || selectedMarkerData.fieldType !== 'regular') return;
+            const data = selectedMarkerData;
+            const currentCoord = coordinates[data.pageIndex][data.label].coords[data.index || 0];
+            const newPos = [currentCoord.pos[0] + 100, currentCoord.pos[1]]; // Offset
+            coordinates[data.pageIndex][data.label].coords.push({
+                pos: newPos,
+                font_size: currentCoord.font_size || 12,
+                char_spacing: currentCoord.char_spacing || 0,
+                rotate: currentCoord.rotate || 0,
+                drawBox: currentCoord.drawBox || false
+            });
+            renderPage(pageNum);
+            updateJson();
+        });
+
+        // Direct update button and panel
+        document.getElementById("directUpdateBtn").addEventListener("click", () => {
+            document.getElementById("directUpdatePanel").style.display = "block";
+        });
+
+        document.getElementById("applyDirectUpdate").addEventListener("click", () => {
+            const fieldName = document.getElementById("directFieldName").value;
+            const pageIndex = parseInt(document.getElementById("directPageIndex").value);
+            const coordIndex = parseInt(document.getElementById("directCoordIndex").value);
+            const x = parseFloat(document.getElementById("directX").value);
+            const y = parseFloat(document.getElementById("directY").value);
+
+            if (!fieldName || isNaN(pageIndex) || isNaN(x) || isNaN(y)) {
+                alert("Please fill all fields correctly.");
+                return;
+            }
+
+            if (!coordinates[pageIndex] || !coordinates[pageIndex][fieldName]) {
+                alert("Field not found. Create it first.");
+                return;
+            }
+
+            let coords = coordinates[pageIndex][fieldName].coords;
+            if (coordIndex >= coords.length) {
+                alert("Coord index out of range.");
+                return;
+            }
+
+            coords[coordIndex].pos = [x, y];
+            renderPage(pageNum);
+            updateJson();
+            alert("Updated successfully!");
+        });
+
+        function updateJson() {
+            document.getElementById("jsonOutput").value =
+                `window.dynamicCoordinates = ${JSON.stringify({
+                    coordinates, field_mapping, charSpacedFields, photo_signature, connectedFields
+                }, null, 2)};`;
+        }
+
+        // DOMContentLoaded and load functions (updated for connectedFields)
+        window.addEventListener("DOMContentLoaded", async () => {
+            const select = document.getElementById("pdfSelect");
+            try {
+                const response = await fetch("/api/pdf-list");
+                const pdfs = await response.json();
+                pdfs.forEach(pdf => {
+                    const option = document.createElement("option");
+                    option.value = pdf;
+                    option.textContent = pdf;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                alert("Failed to load PDF list");
+                console.error(err);
+            }
+        });
+
+        async function loadCoordinatesForPDF(baseName) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = `Coordinates/${baseName}.js?cacheBust=${Date.now()}`;
+                script.onload = () => {
+                    if (window.dynamicCoordinates) {
+                        coordinates = window.dynamicCoordinates.coordinates || {};
+                        field_mapping = window.dynamicCoordinates.field_mapping || {};
+                        charSpacedFields = window.dynamicCoordinates.charSpacedFields || [];
+                        photo_signature = window.dynamicCoordinates.photo_signature || {};
+                        connectedFields = window.dynamicCoordinates.connectedFields || {};
+                        window.dynamicCoordinates = null;
+                        updateJson();
+                        resolve();
+                    } else {
+                        resolve(); // No error if no coords
+                    }
+                };
+                script.onerror = () => resolve();
+                document.body.appendChild(script);
+            });
+        }
+
+        async function loadStamps() {
+            if (!photo_signature.stamps) return;
+            const promises = Object.values(photo_signature.stamps).flat().map(s => {
+                if (!stampImgs[s.file]) {
+                    stampImgs[s.file] = new Image();
+                    return new Promise((res) => {
+                        stampImgs[s.file].onload = res;
+                        stampImgs[s.file].src = `Stamps/${s.file}`;
+                    });
+                }
+                return Promise.resolve();
+            });
+            await Promise.all(promises);
+        }
+
+        // Export JSON (unchanged)
+        document.getElementById("exportJson").addEventListener("click", () => {
+            if (!currentBaseName) {
+                alert("Load a PDF first");
+                return;
+            }
+            const json = document.getElementById("jsonOutput").value;
+            const blob = new Blob([json], { type: "application/javascript" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${currentBaseName}.js`;
+            link.click();
+        });
+
+        // File uploads (unchanged)
+        document.getElementById('txtUpload').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                parsedForms = parseDataFile(event.target.result);
+                renderPage(pageNum);
+            };
+            reader.readAsText(file);
+        });
+
+        function parseDataFile(content) {
+            const formBlocks = content.split(/-{5,}/g);
+            return formBlocks.map(block => {
+                const lines = block.split('\n').filter(line => line.includes(':'));
+                const data = {};
+                lines.forEach(line => {
+                    const [key, ...rest] = line.split(':');
+                    data[key.trim()] = rest.join(':').trim();
+                });
+                return data;
+            }).filter(form => Object.keys(form).length > 0);
+        }
+
+        document.getElementById('photoUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                photoImg = new Image();
+                photoImg.src = URL.createObjectURL(file);
+                photoImg.onload = () => renderPage(pageNum);
+            }
+        });
+
+        document.getElementById('sigUpload').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                sigImg = new Image();
+                sigImg.src = URL.createObjectURL(file);
+                sigImg.onload = () => renderPage(pageNum);
+            }
+        });
+
+        // Add field button (updated for connected_text)
+        document.getElementById("addFieldBtn").addEventListener("click", () => {
+            const fieldType = prompt('Enter type: text, connected_text, photo, signature, stamp');
+            if (!fieldType) return;
+
+            let fieldName, dataKey, stampFile, numPartitions = 0;
+            if (fieldType === 'text') {
+                fieldName = prompt('Enter field name:');
+                if (!fieldName) return;
+                dataKey = prompt('Enter data key (from txt file):', fieldName);
+            } else if (fieldType === 'connected_text') {
+                fieldName = prompt('Enter field name (e.g., address):');
+                if (!fieldName) return;
+                dataKey = prompt('Enter data key (from txt file):', fieldName);
+                numPartitions = parseInt(prompt('Number of partitions:', '3')) || 3;
+            } else if (fieldType === 'stamp') {
+                stampFile = prompt('Enter stamp file name (e.g. Sahara.png):');
+                if (!stampFile) return;
+            }
+
+            canvas.style.cursor = 'crosshair';
+
+            let partitionCount = 0;
+            const onClick = async (e) => {
+                const page = await pdfDoc.getPage(pageNum);
+                const viewport = page.getViewport({scale});
+                const cx = e.offsetX;
+                const cy = e.offsetY;
+                const pdfX = cx / scale;
+                const pdfY = (viewport.height - cy) / scale;
+                const pageIndex = pageNum - 1;
+
+                if (fieldType === 'text') {
+                    if (!coordinates[pageIndex]) coordinates[pageIndex] = {};
+                    if (!coordinates[pageIndex][fieldName]) coordinates[pageIndex][fieldName] = {coords: []};
+                    const newCoord = {pos: [pdfX, pdfY], font_size: 12};
+                    const isSpaced = confirm('Is this char spaced field?');
+                    if (isSpaced) {
+                        charSpacedFields.push(fieldName);
+                        newCoord.char_spacing = 10;
+                    }
+                    coordinates[pageIndex][fieldName].coords.push(newCoord);
+                    if (!field_mapping[fieldName]) field_mapping[fieldName] = dataKey;
+                } else if (fieldType === 'connected_text') {
+                    if (!connectedFields[fieldName]) {
+                        connectedFields[fieldName] = {dataKey, partitions: []};
+                    }
+                    const maxChars = parseInt(prompt(`Max chars for partition ${partitionCount + 1}:`, '20')) || 20;
+                    const newPartition = {
+                        pageIndex,
+                        pos: [pdfX, pdfY],
+                        maxChars,
+                        font_size: 12,
+                        char_spacing: 0,
+                        rotate: 0,
+                        drawBox: false,
+                        width: 100,
+                        height: 20,
+                        fieldName // For char spaced reference
+                    };
+                    connectedFields[fieldName].partitions.push(newPartition);
+                    partitionCount++;
+                    if (partitionCount < numPartitions) {
+                        alert(`Partition ${partitionCount + 1}/${numPartitions}. Click next position.`);
+                        return;
+                    }
+                    const isSpaced = confirm('Is this connected field char spaced?');
+                    if (isSpaced) charSpacedFields.push(fieldName);
+                } else if (fieldType === 'photo') {
+                    if (photo_signature.photo && photo_signature.photo[pageIndex]) {
+                        if (!confirm('Replace existing photo?')) return;
+                    }
+                    if (!photo_signature.photo) photo_signature.photo = {};
+                    photo_signature.photo[pageIndex] = {x: pdfX, y: pdfY, width: 75, height: 100};
+                } else if (fieldType === 'signature') {
+                    if (!photo_signature.signature) photo_signature.signature = {};
+                    if (!photo_signature.signature[pageIndex]) photo_signature.signature[pageIndex] = [];
+                    photo_signature.signature[pageIndex].push({x: pdfX, y: pdfY, width: 170, height: 32});
+                } else if (fieldType === 'stamp') {
+                    if (!photo_signature.stamps) photo_signature.stamps = {};
+                    if (!photo_signature.stamps[pageIndex]) photo_signature.stamps[pageIndex] = [];
+                    photo_signature.stamps[pageIndex].push({file: stampFile, x: pdfX, y: pdfY, width: 100, height: 100});
+                    if (!stampImgs[stampFile]) {
+                        stampImgs[stampFile] = new Image();
+                        stampImgs[stampFile].src = `Stamps/${stampFile}`;
+                        stampImgs[stampFile].onload = () => renderPage(pageNum);
+                    }
+                }
+
+                await renderPage(pageNum);
+                updateJson();
+                if (fieldType !== 'connected_text' || partitionCount >= numPartitions) {
+                    canvas.removeEventListener('click', onClick);
+                    canvas.style.cursor = 'default';
+                }
+            };
+
+            canvas.addEventListener('click', onClick);
+        });
+
+        // Preview button (updated for connected fields, rotation, boxes, multiple coords)
+        document.getElementById("previewBtn").addEventListener("click", async () => {
+            if (!pdfDoc || !currentBaseName) return alert('Load PDF first');
+            if (parsedForms.length === 0) return alert('Upload data file');
+
+            const photoFile = document.getElementById('photoUpload').files[0];
+            const sigFile = document.getElementById('sigUpload').files[0];
+
+            const pdfUrl = `Pdf/${encodeURIComponent(currentBaseName + '.pdf')}`;
+            const basePdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+
+            let photoBytes, sigBytes;
+            if (photoFile) photoBytes = await photoFile.arrayBuffer();
+            if (sigFile) sigBytes = await sigFile.arrayBuffer();
+
+            for (let i = 0; i < parsedForms.length; i++) {
+                const formData = parsedForms[i];
+                const pdf = await PDFLib.PDFDocument.load(basePdfBytes);
+                const pages = pdf.getPages();
+
+                // Regular fields multiple coords with rotation
+                for (let pi = 0; pi < pages.length; pi++) {
+                    const page = pages[pi];
+                    const pageIndex = pi;
+
+                    if (coordinates[pageIndex]) {
+                        for (const field in coordinates[pageIndex]) {
+                            const f = coordinates[pageIndex][field];
+                            const key = field_mapping[field] || field;
+                            const value = formData[key] || '';
+                            f.coords.forEach(pos => {
+                                if (value && pos.pos) {
+                                    const options = {
+                                        x: pos.pos[0],
+                                        y: pos.pos[1],
+                                        size: pos.font_size || 12,
+                                        color: PDFLib.rgb(0, 0, 0),
+                                        rotate: pos.rotate ? PDFLib.degrees(pos.rotate) : undefined
+                                    };
+                                    if (charSpacedFields.includes(field)) {
+                                        let currentX = options.x;
+                                        const chars = value.split('');
+                                        for (let char of chars) {
+                                            page.drawText(char, { ...options, x: currentX });
+                                            currentX += (pos.char_spacing || 10);
+                                        }
+                                    } else {
+                                        page.drawText(value, options);
+                                    }
+                                }
+                            });
+                        }
+                    }
+
+                    // Connected fields with overflow and rotation
+                    for (const field in connectedFields) {
+                        const conn = connectedFields[field];
+                        const key = conn.dataKey || field;
+                        let fullValue = formData[key] || '';
+                        let remaining = fullValue;
+                        conn.partitions.forEach(partition => {
+                            if (partition.pageIndex !== pageIndex) return;
+                            const maxChars = partition.maxChars || Infinity;
+                            const partValue = remaining.slice(0, maxChars);
+                            remaining = remaining.slice(maxChars);
+                            if (partValue && partition.pos) {
+                                const options = {
+                                    x: partition.pos[0],
+                                    y: partition.pos[1],
+                                    size: partition.font_size || 12,
+                                    color: PDFLib.rgb(0, 0, 0),
+                                    rotate: partition.rotate ? PDFLib.degrees(partition.rotate) : undefined
+                                };
+                                if (charSpacedFields.includes(field)) {
+                                    let currentX = options.x;
+                                    const chars = partValue.split('');
+                                    for (let char of chars) {
+                                        page.drawText(char, { ...options, x: currentX });
+                                        currentX += (partition.char_spacing || 10);
+                                    }
+                                } else {
+                                    page.drawText(partValue, options);
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Photo, Signature, Stamps (unchanged)
+                if (photo_signature.photo && photoBytes) {
+                    let img;
+                    try {
+                        img = await pdf.embedJpg(photoBytes);
+                    } catch {
+                        img = await pdf.embedPng(photoBytes);
+                    }
+                    Object.keys(photo_signature.photo || {}).forEach(piStr => {
+                        const pi = parseInt(piStr);
+                        const p = photo_signature.photo[pi];
+                        if (p) pages[pi].drawImage(img, { x: p.x, y: p.y - p.height, width: p.width, height: p.height }); // Adjust y for bottom-left
+                    });
+                }
+
+                if (photo_signature.signature && sigBytes) {
+                    let img;
+                    try {
+                        img = await pdf.embedPng(sigBytes);
+                    } catch {
+                        img = await pdf.embedJpg(sigBytes);
+                    }
+                    Object.keys(photo_signature.signature || {}).forEach(piStr => {
+                        const pi = parseInt(piStr);
+                        (photo_signature.signature[pi] || []).forEach(s => {
+                            pages[pi].drawImage(img, { x: s.x, y: s.y - s.height, width: s.width, height: s.height });
+                        });
+                    });
+                }
+
+                if (photo_signature.stamps) {
+                    for (let pi in photo_signature.stamps) {
+                        const stamps = photo_signature.stamps[pi];
+                        for (const s of stamps) {
+                            const stampUrl = `Stamps/${s.file}`;
+                            try {
+                                const stampResponse = await fetch(stampUrl);
+                                if (!stampResponse.ok) continue;
+                                const stampAB = await stampResponse.arrayBuffer();
+                                let img;
+                                const lowerFile = s.file.toLowerCase();
+                                if (lowerFile.endsWith('.jpg') || lowerFile.endsWith('.jpeg')) {
+                                    img = await pdf.embedJpg(stampAB);
+                                } else {
+                                    img = await pdf.embedPng(stampAB);
+                                }
+                                pages[pi].drawImage(img, { x: s.x, y: s.y - s.height, width: s.width, height: s.height });
+                            } catch (err) {
+                                console.error('Failed to embed stamp:', err);
+                            }
+                        }
+                    }
+                }
+
+                const modifiedBytes = await pdf.save();
+                const blob = new Blob([modifiedBytes], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                const accountNo = formData.accountNo || `form_${i + 1}`;
+                link.href = URL.createObjectURL(blob);
+                link.download = `A${accountNo}.pdf`;
+                link.click();
+
+                await new Promise(r => setTimeout(r, 300));
+            }
+
+            alert("All forms have been downloaded!");
+        });
+    </script>
+</body>
+
+</html>

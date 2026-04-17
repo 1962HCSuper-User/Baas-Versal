@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<meta charset="UTF-8">
+<title>Sahara Membership Form</title>
+<style>
+body { font-family: Arial; margin: 20px; }
+.step { display: none; }
+.step.active { display: block; }
+table, td, th { border: 1px solid #ccc; border-collapse: collapse; padding: 4px; }
+button { margin: 5px; }
+</style>
+</head>
+<body>
+<body>
+
+<h2>Sahara Membership Process</h2>
+
+<div id="step0" class="step active">
+  <h3>Step 0: Personal Details</h3>
+  <label>Profile Image: <input type="file" id="profileImage"></label><br>
+
+  <label>Full Name:
+    <input id="fullName" list="fullNameSuggestions">
+    <datalist id="fullNameSuggestions"></datalist>
+  </label><b
+
+  <label>Father's Name:
+    <input id="fatherName" list="fatherNameSuggestions">
+    <datalist id="fatherNameSuggestions"></datalist>
+  </label><br>
+
+  <label>Gender:
+    <select id="gender">
+      <option value="">-- Select --</option>
+      <option>Male</option>
+      <option>Female</option>
+      <option>Other</option>
+    </select>
+  </label><br>
+
+  <label>Date of Birth: <input type="date" id="dob"></label><br>
+
+  <label>Mobile Number:
+    <input id="mobile" list="mobileSuggestions">
+    <datalist id="mobileSuggestions"></datalist>
+  </label><br>
+
+  <label>Occupation:
+    <input id="occupation" list="occupationSuggestions">
+    <datalist id="occupationSuggestions"></datalist>
+  </label><br>
+
+  <label>CRN Number:
+    <input id="crn" list="crnSuggestions">
+    <datalist id="crnSuggestions"></datalist>
+  </label><br>
+
+  <h4>Address Details</h4>
+
+  <label>House/Flat Number:
+    <input id="houseNo" list="houseNoSuggestions">
+    <datalist id="houseNoSuggestions"></datalist>
+  </label><br>
+
+  <label>Village/City:
+    <input id="city" list="citySuggestions">
+    <datalist id="citySuggestions"></datalist>
+  </label><br>
+
+  <label>Post Office:
+    <input id="postOffice" list="postOfficeSuggestions">
+    <datalist id="postOfficeSuggestions"></datalist>
+  </label><br>
+
+  <label>District:
+    <input id="district" list="districtSuggestions">
+    <datalist id="districtSuggestions"></datalist>
+  </label><br>
+
+  <label>State:
+    <input id="state" list="stateSuggestions">
+    <datalist id="stateSuggestions"></datalist>
+  </label><br>
+
+  <label>Country:
+    <input id="country" list="countrySuggestions">
+    <datalist id="countrySuggestions"></datalist>
+  </label><br>
+
+  <label>PIN Code:
+    <input id="pin" list="pinSuggestions">
+    <datalist id="pinSuggestions"></datalist>
+  </label><br>
+
+  <label>Aadhaar Number:
+    <input id="aadhaar" list="aadhaarSuggestions">
+    <datalist id="aadhaarSuggestions"></datalist>
+  </label><br>
+
+  <label>PAN Number:
+    <input id="pan" list="panSuggestions">
+    <datalist id="panSuggestions"></datalist>
+  </label><br>
+
+  <label>Upload Signature: <input type="file" id="signature"></label><br>
+
+  <button onclick="saveUserInfo()">Next ></button>
+</div>
+
+
+
+
+
+<div id="step1" class="step">
+  <h3>Step 1: Add Companies & Memberships</h3>
+  <label>Company:
+    <select id="company">
+      <option value="SAHARA CREDIT COOPERATIVE SOCIETY LIMITED">SAHARA CREDIT COOPERATIVE SOCIETY LIMITED</option>
+      <option value="HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED">HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED</option>
+      <option value="SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED">SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED</option>
+    </select>
+  </label><br>
+  Member Name: <input id="memberName" oninput="checkNameMatch()" style="border: 1px solid #ccc;"><br>
+<span id="nameError" style="color: red; display: none;">Name mismatch with Full Name</span><br>
+
+Membership No: <input id="membershipNo">
+  Date: <input id="membershipDate" type="date">
+  Application No: <input id="applicationNo">
+  <button onclick="addMembership()">Add Membership</button>
+
+  <h4>Added Memberships</h4>
+  <ul id="membershipList"></ul>
+
+  <button onclick="toStep2()">Next</button>
+</div>
+
+<div id="step2" class="step">
+  <h3>Step 2: Accounts for Membership</h3>
+  <div id="membershipHeading"></div>
+
+  <label>Scheme:
+    <select id="scheme"></select>
+  </label><br><br>
+
+  Auth Code:
+<select id="authCode">
+  <option value="">-- Select Auth Code --</option>
+  <option value="6163">6163</option>
+  <option value="1962">1962</option>
+  <option value="2444">2444</option>
+</select><br>
+
+Branch:
+<select id="branch">
+  <option value="">-- Select Branch --</option>
+  <option value="HATHRAS F.C">HATHRAS F.C</option>
+  <option value="SADABAD">SADABAD</option>
+  <option value="ALIGARH">ALIGARH</option>
+</select><br>
+
+Region:
+<select id="region">
+  <option value="">-- Select Region --</option>
+  <option value="ALIGARH">ALIGARH</option>
+  <option value="DELHI">DELHI</option>
+  <option value="AGRA RO">AGRA RO</option>
+  <option value="MEERUT">MEERUT</option>
+</select><br>
+
+  Account Opening Date: <input id="accountDate" type="date"><br>
+  
+  <h4>Nominee Details</h4>
+Nominee Name: <input id="nomineeName"><br>
+Nominee Relation: <input id="nomineeRelation"><br>
+Nominee DOB: <input id="nomineeDOB" type="date"><br>
+
+  <input type="checkbox" id="isSequential"> Accounts in Sequence?<br>
+  Start Account No: <input id="accNo" value="1000">
+  Start Passbook No: <input id="passNo" value="5000">
+  Start Receipt No: <input id="recNo" value="7000">
+  If sequential, how many?: <input id="seqCount" value="1"><br><br>
+
+
+<div id="accountsContainer"></div>
+
+  <button onclick="addAccounts()">Add Accounts</button>
+  <button onclick="nextMembership()">Next Membership</button>
+  <button onclick="finish()">Finish</button>
+</div>
+<script>
+
+
+
+
+// Field Rembember Buttons
+function saveSuggestion(fieldId) {
+    const input = document.getElementById(fieldId);
+    let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+
+    if (input.value && !suggestions.includes(input.value)) {
+        suggestions.push(input.value);
+        localStorage.setItem(fieldId, JSON.stringify(suggestions));
+    }
+}
+
+function loadSuggestions(fieldId) {
+    const datalist = document.getElementById(fieldId + "Suggestions");
+    let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+
+    datalist.innerHTML = "";
+    suggestions.forEach(value => {
+        let option = document.createElement("option");
+        option.value = value;
+        datalist.appendChild(option);
+    });
+}
+
+const fields = [
+  "fullName", "fatherName", "mobile", "occupation", "crn",
+  "houseNo", "city", "postOffice", "district", "state", "country",
+  "pin", "aadhaar", "pan"
+];
+
+// Load suggestions on page load
+fields.forEach(loadSuggestions);
+
+// Save suggestions when leaving a field
+fields.forEach(id => {
+    document.getElementById(id).addEventListener("blur", () => {
+        saveSuggestion(id);
+        loadSuggestions(id);
+    });
+});
+
+
+
+
+let userInfo = {};
+function saveUserInfo() {
+  userInfo = {
+    fullName: document.getElementById("fullName").value,
+    fatherName: document.getElementById("fatherName").value,
+    gender: document.getElementById("gender").value,
+    dob: document.getElementById("dob").value,
+    mobile: document.getElementById("mobile").value,
+    occupation: document.getElementById("occupation").value,
+    crn: document.getElementById("crn").value,
+    houseNo: document.getElementById("houseNo").value,
+    postOffice: document.getElementById("postOffice").value,
+    state: document.getElementById("state").value,
+    
+    country: document.getElementById("country").value,
+    city: document.getElementById("city").value,
+    district: document.getElementById("district").value,
+    
+    pin: document.getElementById("pin").value,
+    aadhaar: document.getElementById("aadhaar").value,
+    pan: document.getElementById("pan").value,
+    profileImage: document.getElementById("profileImage").files[0]?.name || '',
+    signature: document.getElementById("signature").files[0]?.name || ''
+  };
+
+  // Switch to step 1
+  document.getElementById("step0").classList.remove("active");
+  document.getElementById("step1").classList.add("active");
+}
+
+
+function checkNameMatch() {
+  const fullName = userInfo.fullName?.trim().toUpperCase();
+  const memberNameField = document.getElementById("memberName");
+  const memberName = memberNameField.value.trim().toUpperCase();
+  const errorText = document.getElementById("nameError");
+
+  if (fullName && memberName && fullName !== memberName) {
+    memberNameField.style.border = "2px solid red";
+    errorText.style.display = "inline";
+  } else {
+    memberNameField.style.border = "1px solid #ccc";
+    errorText.style.display = "none";
+  }
+}
+
+const memberships = [];  // to store all membership data
+let currentMembership = -1;
+
+const schemesByCompany = {
+"SAHARA CREDIT COOPERATIVE SOCIETY LIMITED": [
+"sahara s bhavishya 301.pdf",
+"sahara s bhavishya 3011.psd",
+"ALL membership.pdf",
+"SAHARA 4DS.pdf",
+"SAHARA A SELECT.pdf",
+"SAHARA C ANOKHA.pdf",
+"SAHARA DAY.pdf",
+"SAHARA E SHINE--96 Month.pdf",
+"SAHARA G ANOKHA- Monthly.pdf",
+"SAHARA I SELECT..pdf",
+"SAHARA M BENEFIT-60 Month SCCSL.pdf",
+"SAHARA MINOR.pdf",
+"SAHARA N SHINE.pdf",
+"SAHARA S ANOKHA-Monthly.pdf",
+"SAHARA SPECIAL.pdf",
+"SAHARA SUPER.pdf",
+"SAHARA WORKERS SC.pdf",
+"SAHARA.V. DOUBLE.pdf",
+"Y SELECT.pdf"
+],
+"HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED": [
+"GOLDEN A DOUBLE.pdf",
+"HOME POINT-60- Monthly HICCSL.pdf",
+"Member sahariyan.JPG",
+"ROZANA.pdf",
+"SAHARA GOLDEN 24.pdf",
+"SAHARA U GOLDEN.pdf"
+],
+"SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED": [
+"GLOBAL FOUR.pdf",
+"GLOBAL TRIPLE.pdf",
+"GLOBAL.pdf",
+"Saharayn.pdf",
+"STAR TWO.pdf",
+"SUPER AB..pdf",
+"SUPER BB..pdf",
+"SUPER TT.pdf"
+]
+};
+
+function addMembership() {
+  const company = document.getElementById('company').value;
+  const membershipNo = document.getElementById('membershipNo').value;
+  const date = document.getElementById('membershipDate').value;
+  const appNo = document.getElementById('applicationNo').value;
+  const memberName = document.getElementById('memberName').value;
+  
+  
+
+  if (!membershipNo || !date || !appNo) {
+    alert('Fill all fields');
+    return;
+  }
+
+  memberships.push({ company, membershipNo, memberName, date, appNo, accounts: [] });
+  const li = document.createElement('li');
+  li.textContent = `${company} - ${membershipNo}`;
+  document.getElementById('membershipList').appendChild(li);
+
+  document.getElementById('membershipNo').value = '';
+  document.getElementById('membershipDate').value = '';
+  document.getElementById('applicationNo').value = '';
+  document.getElementById('memberName').value = '';
+}
+
+function toStep2() {
+  if (memberships.length === 0) {
+    alert('Add at least one membership');
+    return;
+  }
+
+  document.getElementById('step1').classList.remove('active');
+  document.getElementById('step2').classList.add('active');
+
+  nextMembership();
+}
+
+function nextMembership() {
+  if (currentMembership + 1 >= memberships.length) {
+    alert('All memberships done');
+    return;
+  }
+
+  currentMembership++;
+  const mem = memberships[currentMembership];
+
+  document.getElementById('membershipHeading').innerHTML =
+    `<strong>Filling accounts for:</strong> ${mem.company} - ${mem.membershipNo}`;
+
+  populateSchemes(mem.company);
+
+  document.getElementById('accountsContainer').innerHTML = '';
+}
+
+function populateSchemes(company) {
+  const schemeSelect = document.getElementById('scheme');
+  schemeSelect.innerHTML = '';
+
+  const schemes = schemesByCompany[company] || [];
+  schemes.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s;
+    opt.textContent = s;
+    schemeSelect.appendChild(opt);
+  });
+}
+
+function addAccounts() {
+  const scheme = document.getElementById('scheme').value;
+  const authCode = document.getElementById('authCode').value;
+  const branch = document.getElementById('branch').value;
+  const region = document.getElementById('region').value;
+  const accountDate = document.getElementById('accountDate').value;
+  const nomineeName = document.getElementById('nomineeName').value;
+const nomineeRelation = document.getElementById('nomineeRelation').value;
+const nomineeDOB = document.getElementById('nomineeDOB').value;
+
+  const isSeq = document.getElementById('isSequential').checked;
+
+  let accNo = parseInt(document.getElementById('accNo').value);
+  let passNo = parseInt(document.getElementById('passNo').value);
+  let recNo = parseInt(document.getElementById('recNo').value);
+  const seqCount = parseInt(document.getElementById('seqCount').value);
+
+  if (!scheme || !authCode || !branch || !region || !accountDate) {
+    alert('Fill all fields');
+    return;
+  }
+
+  const container = document.getElementById('accountsContainer');
+
+  for (let i = 0; i < seqCount; i++) {
+    const appNo = prompt(`Enter Application No for account ${i + 1}`);
+    if (!appNo) {
+      alert('Application No required');
+      return;
+    }
+
+    const amount = prompt(`Enter Amount for account ${i + 1}`);
+    const amountWords = numberToWords(parseInt(amount));
+
+    const account = {
+      nomineeName, nomineeRelation, nomineeDOB, scheme, authCode, branch, region, accountDate,
+      accNo, passNo, recNo, appNo, amount, amountWords
+    };
+
+    memberships[currentMembership].accounts.push(account);
+
+    const div = document.createElement('div');
+div.innerHTML =
+  `Account: ${accNo}, Passbook: ${passNo}, Receipt: ${recNo}, Application: ${appNo}, Amount: ${amount} (${amountWords}), Scheme: ${scheme}<br>
+   Nominee: ${nomineeName} (${nomineeRelation}), DOB: ${nomineeDOB}<hr>`;
+container.appendChild(div);
+
+    if (isSeq) {
+      accNo++;
+      passNo++;
+      recNo++;
+    }
+  }
+
+  // update the input fields so next time they start from the new numbers
+  document.getElementById('accNo').value = accNo;
+  document.getElementById('passNo').value = passNo;
+  document.getElementById('recNo').value = recNo;
+}
+
+
+function calculateAgeOnDate(dob, refDate) {
+  const birthDate = new Date(dob);
+  const targetDate = new Date(refDate);
+  let age = targetDate.getFullYear() - birthDate.getFullYear();
+  const m = targetDate.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && targetDate.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+
+
+
+function calculateAge(dob) {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+
+
+
+function formatDateAll(dateStr) {
+  if (!dateStr) return { slash: '', compact: '' };
+  const d = new Date(dateStr);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return {
+    slash: `${day}/${month}/${year}`,
+    compact: `${day}${month}${year}`
+  };
+}
+
+function namesDoNotMatch(mainName, formName) {
+  return (
+    mainName?.trim().toUpperCase() !== formName?.trim().toUpperCase()
+  );
+}
+
+async function finish() {
+  let txt = '';
+  let formIndex = 1;
+
+  const fullAddress = [
+    userInfo.houseNo,
+    userInfo.city,
+    userInfo.postOffice,
+    userInfo.district,
+    userInfo.state,
+    userInfo.country,
+    userInfo.pin
+  ].filter(Boolean).join(', ');
+
+  // === MEMBERSHIP FORMS ===
+  memberships.forEach(m => {
+    const dobFormats = formatDateAll(userInfo.dob);
+    const nominee = m.accounts[0] || {};
+    const nomineeDOBFormats = formatDateAll(nominee.nomineeDOB);
+    const membershipDateFormats = formatDateAll(m.date);
+
+    txt += `=== MEMBERSHIP FORM ${formIndex++} ===\n`;
+    txt += `schemeName: ${userInfo.societyName}\n`;
+    txt += `membershipNo: ${m.membershipNo}\n`;
+    txt += `membershipDate: ${membershipDateFormats.slash}\n`;
+    txt += `membership_date: ${membershipDateFormats.compact}\n`;
+    txt += `applicationNo: ${m.appNo || ''}\n`;
+    txt += `fullName: ${userInfo.fullName}\n`;
+
+    // log mismatched name if different
+    if (namesDoNotMatch(userInfo.fullName, m.memberName)) {
+      txt += `mismatchedName: ${m.memberName || ''}\n`;
+    }
+
+    txt += `gender: ${userInfo.gender}\n`;
+    txt += `dateOfBirth: ${dobFormats.slash}\n`;
+    txt += `dob_date: ${dobFormats.compact}\n`;
+    txt += `fatherName: ${userInfo.fatherName}\n`;
+    txt += `mobileNo: ${userInfo.mobile}\n`;
+    txt += `occupation: ${userInfo.occupation}\n`;
+    txt += `CRN: ${userInfo.crn}\n`;
+    txt += `aadhaar: ${userInfo.aadhaar}\n`;
+    txt += `pan: ${userInfo.pan}\n`;
+    txt += `address: ${fullAddress}\n`;
+    txt += `nomineeName: ${nominee.nomineeName || ''}\n`;
+    txt += `nomineeRelation: ${nominee.nomineeRelation || ''}\n`;
+    txt += `nomineeDOB: ${nomineeDOBFormats.slash}\n`;
+    txt += `nominee_date: ${nomineeDOBFormats.compact}\n`;
+    txt += `\n----------------------------------------\n\n`;
+  });
+
+  // === ACCOUNT FORMS ===
+  memberships.forEach((m) => {
+    m.accounts.forEach((a) => {
+      const nomineeAge = calculateAgeOnDate(a.nomineeDOB, a.accountDate);
+      const memberAgeAtAccount = calculateAgeOnDate(userInfo.dob, a.accountDate);
+
+      const accountDateFormats = formatDateAll(a.accountDate);
+      const nomineeDOBFormats = formatDateAll(a.nomineeDOB);
+      const dobFormats = formatDateAll(userInfo.dob);
+
+      txt += `=== ACCOUNT FORM ${formIndex++} ===\n`;
+      txt += `schemeName: ${a.schemeName}\n`;
+      txt += `accountNo: ${a.accNo}\n`;
+      txt += `membershipNo: ${m.membershipNo}\n`;
+      txt += `denomination: ${a.amount}\n`;
+      txt += `accountOpeningDate: ${accountDateFormats.slash}\n`;
+      txt += `account_date: ${accountDateFormats.compact}\n`;
+      txt += `receiptNo: ${a.recNo}\n`;
+      txt += `certificateNo: ${100000000000 + a.recNo}\n`;
+      txt += `applicationNo: ${a.appNo}\n`;
+      txt += `amount: ${a.amount}\n`;
+      txt += `amountInWords: ${a.amountWords.toUpperCase()} RUPEES\n`;
+      txt += `paymentMode: Cash\n`;
+      txt += `proofDocument: Aadhar Card\n`;
+      txt += `fullName: ${userInfo.fullName}\n`;
+
+      // log mismatched name if different
+      if (namesDoNotMatch(userInfo.fullName, a.accountHolderName)) {
+        txt += `mismatchedName: ${a.accountHolderName || ''}\n`;
+      }
+
+      txt += `dateOfBirth: ${dobFormats.slash}\n`;
+      txt += `dob_date: ${dobFormats.compact}\n`;
+      txt += `age: ${memberAgeAtAccount}\n`;
+      txt += `guardianName: ${userInfo.fatherName}\n`;
+      txt += `nomineeName: ${a.nomineeName}\n`;
+      txt += `nomineeRelation: ${a.nomineeRelation}\n`;
+      txt += `nomineeDOB: ${nomineeDOBFormats.slash}\n`;
+      txt += `nominee_date: ${nomineeDOBFormats.compact}\n`;
+      txt += `nomineeAge: ${nomineeAge}\n`;
+      txt += `proportion: 100\n`;
+      txt += `address: ${fullAddress}\n`;
+      txt += `mobileNo: ${userInfo.mobile}\n`;
+      txt += `panCard: ${userInfo.pan}\n`;
+      txt += `centreCode: ${a.accNo.toString().substring(0, 4)}\n`;
+      txt += `centreName: ${a.branch} F.C\n`;
+      txt += `region: ${a.region}\n`;
+      txt += `\n----------------------------------------\n\n`;
+    });
+
+    
+  });
+
+  // const textBlob = new Blob([txt], { type: 'text/plain' });
+  // const textLink = document.createElement('a');
+  // textLink.href = URL.createObjectURL(textBlob);
+  // textLink.download = `${userInfo.aadhaar}_all_forms.txt`;
+  // textLink.click();
+
+ try {
+    const response = await fetch('/saveForm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: `${userInfo.aadhaar}_all_forms.txt`,
+        content: txt
+      })
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      alert("Form saved successfully in Pending folder!");
+    } else {
+      alert("Failed to save form: " + result.message);
+    }
+  } catch (err) {
+    console.error("Error saving form:", err);
+    alert("Error connecting to server.");
+  }
+
+}
+
+  
+
+function numberToWords(n) {
+  const a = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+    "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+  const b = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+
+  if (n < 20) return a[n];
+  if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+  if (n < 1000) return a[Math.floor(n / 100)] + " Hundred" + (n % 100 ? " " + numberToWords(n % 100) : "");
+  if (n < 100000) return numberToWords(Math.floor(n / 1000)) + " Thousand" + (n % 1000 ? " " + numberToWords(n % 1000) : "");
+  return n;
+}
+
+function showAccountForAppNo() {
+  const appNo = document.getElementById('searchAppNo').value;
+  const resultDiv = document.getElementById('accountResult');
+
+  const accounts = memberships[currentMembership]?.accounts || [];
+  const match = accounts.find(a => a.appNo === appNo);
+
+  if (match) {
+    resultDiv.innerHTML = `Account No: <strong>${match.accNo}</strong>`;
+  } else {
+    resultDiv.innerHTML = appNo ? 'No account found for this application no.' : '';
+  }
+}
+</script>
+
+</body>
+</html>

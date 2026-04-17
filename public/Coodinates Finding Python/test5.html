@@ -1,0 +1,762 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Form Coordinate Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0b1220;
+            color: #e2e8f0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background-color: #1e293b;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #60a5fa;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background-color: #334155;
+        }
+
+        .btn-success {
+            background-color: #059669;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .main-container {
+            display: flex;
+            height: calc(100vh - 80px);
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #1e293b;
+            border-right: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .upload-section {
+            padding: 1.5rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .upload-section h3 {
+            margin-bottom: 1rem;
+            color: #60a5fa;
+            font-size: 1rem;
+        }
+
+        .upload-btn {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .fields-section {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .fields-section h3 {
+            margin-bottom: 1rem;
+            color: #60a5fa;
+            font-size: 1rem;
+        }
+
+        .field-item {
+            background-color: #334155;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .field-item:hover {
+            background-color: #475569;
+        }
+
+        .field-item.selected {
+            border-color: #3b82f6;
+            background-color: #1e40af;
+        }
+
+        .viewer-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: #0f172a;
+        }
+
+        .viewer-controls {
+            padding: 1rem;
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .page-info {
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: auto;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        #pdfCanvas {
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .field-label {
+            position: absolute;
+            background-color: rgba(59, 130, 246, 0.8);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: move;
+            user-select: none;
+            border: 2px solid #3b82f6;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .field-label.selected {
+            border-color: #fbbf24;
+            background-color: rgba(251, 191, 36, 0.8);
+        }
+
+        .field-label .resize-handle {
+            position: absolute;
+            bottom: -3px;
+            right: -3px;
+            width: 8px;
+            height: 8px;
+            background-color: #fbbf24;
+            cursor: se-resize;
+            border-radius: 50%;
+        }
+
+        .field-controls {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background-color: #1e293b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid #334155;
+            display: none;
+            z-index: 1000;
+        }
+
+        .field-controls.show {
+            display: block;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #94a3b8;
+            font-size: 0.875rem;
+        }
+
+        .control-group input {
+            width: 100%;
+            background-color: #334155;
+            border: 1px solid #475569;
+            color: #e2e8f0;
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        .mode-toggle {
+            display: flex;
+            background-color: #334155;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+
+        .mode-toggle button {
+            background-color: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .mode-toggle button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .status-message {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #059669;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            display: none;
+            z-index: 1001;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.error {
+            background-color: #dc2626;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PDF Form Coordinate Editor</h1>
+        <div class="header-controls">
+            <div class="mode-toggle">
+                <button id="editModeBtn" class="active">Edit Mode</button>
+                <button id="previewModeBtn">Preview Mode</button>
+            </div>
+            <button class="btn btn-success" id="downloadBtn">Download JSON</button>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="upload-section">
+                <h3>Upload Files</h3>
+                <button class="btn upload-btn" onclick="document.getElementById('pdfInput').click()">
+                    Upload PDF
+                </button>
+                <button class="btn upload-btn" onclick="document.getElementById('txtInput').click()">
+                    Upload TXT File
+                </button>
+                <input type="file" id="pdfInput" class="file-input" accept=".pdf">
+                <input type="file" id="txtInput" class="file-input" accept=".txt">
+            </div>
+
+            <div class="fields-section">
+                <h3>Form Fields</h3>
+                <div id="fieldsList"></div>
+            </div>
+        </div>
+
+        <div class="viewer-container">
+            <div class="viewer-controls">
+                <div class="page-controls">
+                    <button class="btn btn-secondary" id="prevPageBtn" disabled>Previous</button>
+                    <span class="page-info" id="pageInfo">No PDF loaded</span>
+                    <button class="btn btn-secondary" id="nextPageBtn" disabled>Next</button>
+                </div>
+            </div>
+
+            <div class="canvas-container">
+                <canvas id="pdfCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="field-controls" id="fieldControls">
+        <div class="control-group">
+            <label>Font Size</label>
+            <input type="number" id="fontSizeInput" min="8" max="72" value="14">
+        </div>
+        <div class="control-group">
+            <label>Character Spacing</label>
+            <input type="number" id="charSpacingInput" min="0" max="50" value="16">
+        </div>
+    </div>
+
+    <div class="status-message" id="statusMessage"></div>
+
+    <script>
+        // Global variables
+        let pdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+        let canvas = document.getElementById('pdfCanvas');
+        let ctx = canvas.getContext('2d');
+        let formFields = {};
+        let coordinates = { coordinates: {} };
+        let selectedField = null;
+        let isEditMode = true;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOffset = { x: 0, y: 0 };
+
+        // PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // Event listeners
+        document.getElementById('pdfInput').addEventListener('change', handlePDFUpload);
+        document.getElementById('txtInput').addEventListener('change', handleTXTUpload);
+        document.getElementById('prevPageBtn').addEventListener('click', () => changePage(-1));
+        document.getElementById('nextPageBtn').addEventListener('click', () => changePage(1));
+        document.getElementById('editModeBtn').addEventListener('click', () => setMode(true));
+        document.getElementById('previewModeBtn').addEventListener('click', () => setMode(false));
+        document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
+        document.getElementById('fontSizeInput').addEventListener('input', updateFieldProperties);
+        document.getElementById('charSpacingInput').addEventListener('input', updateFieldProperties);
+
+        // Canvas event listeners
+        canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
+        canvas.addEventListener('mouseup', handleMouseUp);
+        canvas.addEventListener('click', handleCanvasClick);
+
+        // Handle PDF upload
+        async function handlePDFUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
+                totalPages = pdfDoc.numPages;
+                currentPage = 1;
+                
+                await renderPage();
+                updatePageControls();
+                showStatus('PDF loaded successfully!');
+            } catch (error) {
+                showStatus('Error loading PDF: ' + error.message, true);
+            }
+        }
+
+        // Handle TXT upload
+        async function handleTXTUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const lines = text.split('\n');
+                formFields = {};
+
+                lines.forEach(line => {
+                    const [key, value] = line.split(':').map(s => s.trim());
+                    if (key && value) {
+                        formFields[key] = value;
+                    }
+                });
+
+                renderFieldsList();
+                showStatus('Form fields loaded successfully!');
+            } catch (error) {
+                showStatus('Error loading TXT file: ' + error.message, true);
+            }
+        }
+
+        // Render PDF page
+        async function renderPage() {
+            if (!pdfDoc) return;
+
+            const page = await pdfDoc.getPage(currentPage);
+            const viewport = page.getViewport({ scale: 1.5 });
+            
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            
+            const renderContext = {
+                canvasContext: ctx,
+                viewport: viewport
+            };
+            
+            await page.render(renderContext).promise;
+            renderFields();
+        }
+
+        // Render fields list in sidebar
+        function renderFieldsList() {
+            const fieldsList = document.getElementById('fieldsList');
+            fieldsList.innerHTML = '';
+
+            Object.keys(formFields).forEach(fieldName => {
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                fieldItem.textContent = fieldName;
+                fieldItem.addEventListener('click', () => addFieldToCanvas(fieldName));
+                fieldsList.appendChild(fieldItem);
+            });
+        }
+
+        // Add field to canvas
+        function addFieldToCanvas(fieldName) {
+            if (!pdfDoc) {
+                showStatus('Please load a PDF first', true);
+                return;
+            }
+
+            const pageKey = (currentPage - 1).toString();
+            if (!coordinates.coordinates[pageKey]) {
+                coordinates.coordinates[pageKey] = {};
+            }
+            if (!coordinates.coordinates[pageKey][fieldName]) {
+                coordinates.coordinates[pageKey][fieldName] = { coords: [] };
+            }
+
+            // Add new coordinate
+            const newCoord = {
+                pos: [100, 100],
+                char_spacing: 16,
+                font_size: 14
+            };
+
+            coordinates.coordinates[pageKey][fieldName].coords.push(newCoord);
+            renderFields();
+            showStatus(`Field "${fieldName}" added to page ${currentPage}`);
+        }
+
+        // Render fields on canvas
+        function renderFields() {
+            // Clear existing field labels
+            document.querySelectorAll('.field-label').forEach(label => label.remove());
+
+            const pageKey = (currentPage - 1).toString();
+            const pageCoords = coordinates.coordinates[pageKey];
+            
+            if (!pageCoords) return;
+
+            Object.keys(pageCoords).forEach(fieldName => {
+                pageCoords[fieldName].coords.forEach((coord, index) => {
+                    createFieldLabel(fieldName, coord, index);
+                });
+            });
+        }
+
+        // Create field label element
+        function createFieldLabel(fieldName, coord, coordIndex) {
+            const label = document.createElement('div');
+            label.className = 'field-label';
+            label.dataset.fieldName = fieldName;
+            label.dataset.coordIndex = coordIndex;
+            
+            const canvasRect = canvas.getBoundingClientRect();
+            const containerRect = canvas.parentElement.getBoundingClientRect();
+            
+            label.style.left = (canvasRect.left - containerRect.left + coord.pos[0]) + 'px';
+            label.style.top = (canvasRect.top - containerRect.top + coord.pos[1]) + 'px';
+            label.style.fontSize = coord.font_size + 'px';
+
+            if (isEditMode) {
+                label.textContent = fieldName;
+                label.style.backgroundColor = 'rgba(59, 130, 246, 0.8)';
+                
+                // Add resize handle
+                const resizeHandle = document.createElement('div');
+                resizeHandle.className = 'resize-handle';
+                label.appendChild(resizeHandle);
+            } else {
+                label.textContent = formFields[fieldName] || fieldName;
+                label.style.backgroundColor = 'transparent';
+                label.style.border = 'none';
+                label.style.color = '#000';
+                label.style.cursor = 'default';
+                
+                // Apply character spacing
+                label.style.letterSpacing = (coord.char_spacing - coord.font_size) + 'px';
+            }
+
+            canvas.parentElement.appendChild(label);
+        }
+
+        // Handle mouse events
+        function handleMouseDown(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            // Check if clicking on a field label
+            const labels = document.querySelectorAll('.field-label');
+            let clickedLabel = null;
+
+            labels.forEach(label => {
+                const labelRect = label.getBoundingClientRect();
+                const labelX = labelRect.left - rect.left;
+                const labelY = labelRect.top - rect.top;
+                
+                if (x >= labelX && x <= labelX + labelRect.width &&
+                    y >= labelY && y <= labelY + labelRect.height) {
+                    clickedLabel = label;
+                }
+            });
+
+            if (clickedLabel && isEditMode) {
+                selectField(clickedLabel);
+                
+                // Check if clicking on resize handle
+                const resizeHandle = clickedLabel.querySelector('.resize-handle');
+                if (resizeHandle) {
+                    const handleRect = resizeHandle.getBoundingClientRect();
+                    if (event.clientX >= handleRect.left && event.clientX <= handleRect.right &&
+                        event.clientY >= handleRect.top && event.clientY <= handleRect.bottom) {
+                        isResizing = true;
+                        return;
+                    }
+                }
+                
+                isDragging = true;
+                const labelRect = clickedLabel.getBoundingClientRect();
+                dragOffset.x = event.clientX - labelRect.left;
+                dragOffset.y = event.clientY - labelRect.top;
+            }
+        }
+
+        function handleMouseMove(event) {
+            if (!selectedField) return;
+
+            if (isDragging) {
+                const containerRect = canvas.parentElement.getBoundingClientRect();
+                const newX = event.clientX - containerRect.left - dragOffset.x;
+                const newY = event.clientY - containerRect.top - dragOffset.y;
+                
+                selectedField.style.left = newX + 'px';
+                selectedField.style.top = newY + 'px';
+                
+                updateFieldCoordinates();
+            } else if (isResizing) {
+                const rect = selectedField.getBoundingClientRect();
+                const newWidth = event.clientX - rect.left;
+                const newHeight = event.clientY - rect.top;
+                
+                selectedField.style.width = Math.max(60, newWidth) + 'px';
+                selectedField.style.height = Math.max(20, newHeight) + 'px';
+            }
+        }
+
+        function handleMouseUp() {
+            isDragging = false;
+            isResizing = false;
+        }
+
+        function handleCanvasClick(event) {
+            if (!isDragging && !isResizing) {
+                deselectField();
+            }
+        }
+
+        // Field selection
+        function selectField(label) {
+            deselectField();
+            selectedField = label;
+            label.classList.add('selected');
+            
+            const fieldName = label.dataset.fieldName;
+            const coordIndex = parseInt(label.dataset.coordIndex);
+            const pageKey = (currentPage - 1).toString();
+            const coord = coordinates.coordinates[pageKey][fieldName].coords[coordIndex];
+            
+            document.getElementById('fontSizeInput').value = coord.font_size;
+            document.getElementById('charSpacingInput').value = coord.char_spacing;
+            document.getElementById('fieldControls').classList.add('show');
+        }
+
+        function deselectField() {
+            if (selectedField) {
+                selectedField.classList.remove('selected');
+                selectedField = null;
+            }
+            document.getElementById('fieldControls').classList.remove('show');
+        }
+
+        // Update field coordinates
+        function updateFieldCoordinates() {
+            if (!selectedField) return;
+
+            const canvasRect = canvas.getBoundingClientRect();
+            const containerRect = canvas.parentElement.getBoundingClientRect();
+            const labelRect = selectedField.getBoundingClientRect();
+            
+            const x = labelRect.left - canvasRect.left;
+            const y = labelRect.top - canvasRect.top;
+            
+            const fieldName = selectedField.dataset.fieldName;
+            const coordIndex = parseInt(selectedField.dataset.coordIndex);
+            const pageKey = (currentPage - 1).toString();
+            
+            coordinates.coordinates[pageKey][fieldName].coords[coordIndex].pos = [x, y];
+        }
+
+        // Update field properties
+        function updateFieldProperties() {
+            if (!selectedField) return;
+
+            const fontSize = parseInt(document.getElementById('fontSizeInput').value);
+            const charSpacing = parseInt(document.getElementById('charSpacingInput').value);
+            
+            const fieldName = selectedField.dataset.fieldName;
+            const coordIndex = parseInt(selectedField.dataset.coordIndex);
+            const pageKey = (currentPage - 1).toString();
+            
+            coordinates.coordinates[pageKey][fieldName].coords[coordIndex].font_size = fontSize;
+            coordinates.coordinates[pageKey][fieldName].coords[coordIndex].char_spacing = charSpacing;
+            
+            selectedField.style.fontSize = fontSize + 'px';
+            
+            if (!isEditMode) {
+                selectedField.style.letterSpacing = (charSpacing - fontSize) + 'px';
+            }
+        }
+
+        // Page navigation
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                renderPage();
+                updatePageControls();
+                deselectField();
+            }
+        }
+
+        function updatePageControls() {
+            document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+            document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+            document.getElementById('pageInfo').textContent = 
+                pdfDoc ? `Page ${currentPage} of ${totalPages}` : 'No PDF loaded';
+        }
+
+        // Mode toggle
+        function setMode(editMode) {
+            isEditMode = editMode;
+            document.getElementById('editModeBtn').classList.toggle('active', editMode);
+            document.getElementById('previewModeBtn').classList.toggle('active', !editMode);
+            
+            deselectField();
+            renderFields();
+        }
+
+        // Download JSON
+        function downloadJSON() {
+            const dataStr = JSON.stringify(coordinates, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'coordinates.json';
+            link.click();
+            
+            URL.revokeObjectURL(url);
+            showStatus('JSON file downloaded successfully!');
+        }
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.classList.toggle('error', isError);
+            statusEl.classList.add('show');
+            
+            setTimeout(() => {
+                statusEl.classList.remove('show');
+            }, 3000);
+        }
+
+        // Initialize
+        updatePageControls();
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9710c1cf9015597e',t:'MTc1NTUxMzI0OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

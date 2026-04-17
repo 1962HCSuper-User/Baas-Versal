@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Editor</title>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button { margin: 10px 0; }
+  </style>
+</head>
+<body>
+
+  <h2>Edit and Download PDF (Frontend Only)</h2>
+
+  <label>Select PDF Template:</label>
+  <input type="file" id="pdf-upload" accept="application/pdf"><br>
+
+  <label>Select Image to Embed (Stamp/Photo):</label>
+  <input type="file" id="img-upload" accept="image/*"><br>
+
+  <label>Enter Text to Add:</label>
+  <input type="text" id="input-text" placeholder="Type your name or info"><br>
+
+  <button onclick="editAndDownloadPDF()">Edit & Download</button>
+
+  <script>
+    async function editAndDownloadPDF() {
+      const pdfFile = document.getElementById('pdf-upload').files[0];
+      const imgFile = document.getElementById('img-upload').files[0];
+      const inputText = document.getElementById('input-text').value;
+
+      if (!pdfFile) return alert("Please upload a PDF");
+      const pdfBytes = await pdfFile.arrayBuffer();
+
+      const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+      const pages = pdfDoc.getPages();
+      const firstPage = pages[0];
+
+      const { width, height } = firstPage.getSize();
+
+      // Add text at position (x, y)
+      firstPage.drawText(inputText, {
+        x: 50,
+        y: height - 100,
+        size: 20,
+        color: PDFLib.rgb(0, 0, 0)
+      });
+
+      // If image is selected, embed it
+      if (imgFile) {
+        const imgBytes = await imgFile.arrayBuffer();
+        let image;
+        if (imgFile.type.includes("png")) {
+          image = await pdfDoc.embedPng(imgBytes);
+        } else {
+          image = await pdfDoc.embedJpg(imgBytes);
+        }
+
+        const imgDims = image.scale(0.3);
+        firstPage.drawImage(image, {
+          x: 50,
+          y: height - 300,
+          width: imgDims.width,
+          height: imgDims.height
+        });
+      }
+
+      // Final PDF
+      const finalPdf = await pdfDoc.save();
+
+      // Download it
+      const blob = new Blob([finalPdf], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'Edited_PDF.pdf';
+      link.click();
+    }
+  </script>
+</body>
+</html>

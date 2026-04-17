@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Filler — Live Preview + Drag to Reposition</title>
+  <style>
+    body{font-family:Inter,system-ui,Arial;margin:16px;background:#0b1220;color:#e9eefb}
+    h2{margin:0 0 12px}
+    label{display:block;margin:12px 0 6px}
+    select,input[type="file"],button{margin:6px 8px 6px 0;padding:8px 10px;border-radius:10px;border:1px solid #2a3245;background:#121a2b;color:#e9eefb}
+    button{cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+    .row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+    .hint{font-size:12px;opacity:.8}
+    #viewer{position:relative;display:inline-block;border-radius:14px;overflow:hidden;border:1px solid #2a3245;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+    #pdfCanvas{display:block;background:#fff}
+    #overlay{position:absolute;left:0;top:0;right:0;bottom:0;pointer-events:none}
+    .draggable{position:absolute;pointer-events:auto;padding:2px 6px;border:1px dashed #69a2ff;background:rgba(11,116,255,.08);border-radius:10px;user-select:none;white-space:pre}
+    .draggable:focus{outline:none;border-color:#9cc5ff}
+    .charbox{position:absolute;pointer-events:auto;border:0;background:transparent;white-space:pre}
+    .toolbar{display:flex;align-items:center;gap:8px;margin:12px 0}
+    .pill{background:#121a2b;border:1px solid #2a3245;padding:6px 10px;border-radius:999px}
+    .spacer{flex:1}
+    .badge{font-size:12px;padding:2px 8px;border-radius:999px;background:#1b2744;opacity:.85}
+    .ghost{opacity:.4}
+  </style>
+</head>
+<body>
+  <h2>PDF Filler — Live Preview (No Download)</h2>
+
+  <div class="row">
+    <div>
+      <label>Select PDF</label>
+      <select id="pdfSelect"></select>
+    </div>
+
+    <div>
+      <label>Data File (.txt / .data)</label>
+      <input type="file" id="dataFileInput" accept=".txt,.data">
+    </div>
+
+    <div>
+      <label>Photo</label>
+      <input type="file" id="photoInput" accept="image/*">
+    </div>
+
+    <div>
+      <label>Signature</label>
+      <input type="file" id="signatureInput" accept="image/*">
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <button id="prevPageBtn">◀ Prev</button>
+    <span class="pill"><span id="pageInfo">Page 1 / 1</span></span>
+    <button id="nextPageBtn">Next ▶</button>
+    <span class="spacer"></span>
+    <span class="badge" id="recordInfo">Record: 1</span>
+    <button id="prevRecordBtn">◀ Record</button>
+    <button id="nextRecordBtn">Record ▶</button>
+    <span class="spacer"></span>
+    <button id="toggleLabelsBtn">Toggle Field Labels</button>
+    <button id="saveCoordsBtn">Save Coordinates</button>
+  </div>
+
+  <div id="viewer">
+    <canvas id="pdfCanvas"></canvas>
+    <div id="overlay"></div>
+  </div>
+
+  <p class="hint">Drag any field on the page to update its coordinates. Click “Save Coordinates” to download the updated <code>.js</code> file named after the selected PDF.</p>
+
+  <!-- Local pdf.js and worker -->
+  <script src="lib/pdf.min.js" onerror="console.error('Failed to load lib/pdf.min.js'); alert('Failed to load pdf.min.js. Ensure the file is in the lib/ folder.');"></script>
+  <script src="lib/pdf.worker.min.js" onerror="console.error('Failed to load lib/pdf.worker.min.js'); alert('Failed to load pdf.worker.min.js. Ensure the file is in the lib/ folder.');"></script>
+  <!-- pdf-lib (only if you later need to produce PDFs; not used for preview) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" onerror="console.error('Failed to load pdf-lib.min.js');"></script>
+
+  <script>
+  // Wait for pdf.js to load
+  function waitForPdfJs() {
+    return new Promise((resolve, reject) => {
+      const maxAttempts = 50; // Try for ~5 seconds
+      let attempts = 0;
+      const check = setInterval(() => {
+        if (typeof pdfjsLib !== 'undefined') {
+          clearInterval(check);
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(check);
+          reject(new Error('pdf.js failed to load after timeout'));
+        }
+        attempts++;
+      }, 100);
+    });
+  }
+
+  // ======== State ========
+  let pdfDoc = null;
+  let currentPage = 1;
+  let totalPages = 1;
+  let scale = 1;                 // canvas scale (affects overlay layout)
+  let pageViewport = null;       // pdf.js viewport of current page
+  let canvas = null, ctx = null;
+  let overlay = null;
+
+  let parsedForms = [];          // array of data objects (records)
+  let currentRecordIndex = 0;    // 0-based
+
+  // dynamicCoordinates parts (populated after loading coordinates JS)
+  let coordinates = {};
+  let field_mapping = {};
+  let charSpacedFields = [];
+  let photo_signature = {};
+
+  // resources (Uploads)
+  let photoObjectUrl = null;
+  let signatureObjectUrl = null;
+
+  const $ = sel => document.querySelector(sel);
+
+  // ======== Helpers ========
+
+  // Parse the uploaded .txt/.data into record objects
+  function parseDataFile(content) {
+    const formBlocks = content.split(/-{5,}/g);
+    return formBlocks.map(block => {
+      const lines = block.split('\n').filter(line => line.includes(':'));
+      const data = {};
+      lines.forEach(line => {
+        const [key, ...rest] = line.split(':');
+        data[key.trim()] = rest.join(':').trim();
+      });
+      return data;
+    }).filter(obj => Object.keys(obj).length > 0);
+  }
+
+  // Load JS coordinates file for selected PDF
+  async function loadCoordinatesForPDF(pdfNameWithoutExt) {
+    await new Promise((resolve) => {
+      const exists = document.querySelectorAll('script[data-coords="1"]');
+      exists.forEach(n => n.remove());
+      resolve();
+    });
+
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.dataset.coords = "1";
+      script.src = `Coordinates/${pdfNameWithoutExt}.js?cacheBust=${Date.now()}`;
+      script.onload = () => {
+        if (window.dynamicCoordinates) {
+          coordinates = window.dynamicCoordinates.coordinates || {};
+          field_mapping = window.dynamicCoordinates.field_mapping || {};
+          charSpacedFields = window.dynamicCoordinates.charSpacedFields || [];
+          photo_signature = window.dynamicCoordinates.photo_signature || {};
+          window.dynamicCoordinates = null; // clear global
+          resolve();
+        } else {
+          reject(new Error("No coordinates found in JS file"));
+        }
+      };
+      script.onerror = () => reject(new Error(`Failed to load coordinates for ${pdfNameWithoutExt}`));
+      document.body.appendChild(script);
+    });
+  }
+
+  // Fetch list of PDFs
+  async function loadPdfList() {
+    const select = $('#pdfSelect');
+    select.innerHTML = "";
+    const res = await fetch('/api/pdf-list');
+    const pdfs = await res.json();
+    pdfs.forEach(pdf => {
+      const opt = document.createElement('option');
+      opt.value = pdf;
+      opt.textContent = pdf;
+      select.appendChild(opt);
+    });
+  }
+
+  // Load PDF into pdf.js
+  async function openPdf(url) {
+    try {
+      if (typeof pdfjsLib === 'undefined') {
+        throw new Error('pdfjsLib is not defined');
+      }
+      const loadingTask = pdfjsLib.getDocument(url);
+      pdfDoc = await loadingTask.promise;
+      totalPages = pdfDoc.numPages;
+      currentPage = 1;
+      await renderPage(currentPage);
+      updatePageInfo();
+    } catch (error) {
+      console.error('Error loading PDF:', error);
+      alert('Failed to load PDF: ' + error.message);
+    }
+  }
+
+  function updatePageInfo() {
+    $('#pageInfo').textContent = `Page ${currentPage} / ${totalPages}`;
+    $('#recordInfo').textContent = `Record: ${currentRecordIndex + 1}`;
+  }
+
+  // Render a page to canvas
+  async function renderPage(pageNum) {
+    const page = await pdfDoc.getPage(pageNum);
+    const desiredWidth = Math.min(1000, window.innerWidth - 48);
+    const unscaledViewport = page.getViewport({ scale: 1 });
+    scale = desiredWidth / unscaledViewport.width;
+    const viewport = page.getViewport({ scale });
+    pageViewport = viewport;
+
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+
+    const renderCtx = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    await page.render(renderCtx).promise;
+
+    drawOverlayForPage(pageNum);
+  }
+
+  // Convert PDF coords (origin bottom-left) to overlay CSS (origin top-left)
+  function pdfToOverlay({ x, y, fontSize = 12 }) {
+    const pxX = x * scale;
+    const pxY = y * scale;
+    const top = canvas.height - pxY - fontSize;
+    return { left: pxX, top: top };
+  }
+
+  // Make an element draggable & update coordinates upon drop
+  function makeDraggable(el, onDrop) {
+    let startX=0, startY=0, origLeft=0, origTop=0, dragging=false;
+
+    function mousedown(e) {
+      e.preventDefault();
+      dragging = true;
+      el.classList.add('dragging');
+      const rect = el.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      origLeft = parseFloat(el.style.left || "0");
+      origTop  = parseFloat(el.style.top  || "0");
+      document.addEventListener('mousemove', mousemove);
+      document.addEventListener('mouseup', mouseup);
+    }
+    function mousemove(e) {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      el.style.left = (origLeft + dx) + "px";
+      el.style.top  = (origTop + dy) + "px";
+    }
+    function mouseup(e) {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove('dragging');
+      document.removeEventListener('mousemove', mousemove);
+      document.removeEventListener('mouseup', mouseup);
+      if (onDrop) onDrop(el);
+    }
+
+    el.addEventListener('mousedown', mousedown);
+    el.ondragstart = () => false;
+  }
+
+  // Renders fields/images for a given page index (1-based)
+  function drawOverlayForPage(pageNum) {
+    overlay.innerHTML = "";
+
+    const rec = parsedForms[currentRecordIndex] || {};
+    const pageIndex = String(pageNum - 1);
+
+    const pageFields = coordinates[pageIndex] || {};
+    Object.keys(pageFields).forEach(fieldLabel => {
+      const cfg = pageFields[fieldLabel];
+      (cfg.coords || []).forEach((slot, idx) => {
+        const dataKey = field_mapping[fieldLabel];
+        const text = (dataKey ? (rec[dataKey] || "") : "") + "";
+        const fontSize = slot.font_size || 12;
+        const charSpacing = slot.char_spacing || 0;
+        const { left, top } = pdfToOverlay({ x: slot.pos[0], y: slot.pos[1], fontSize });
+
+        const isSpaced = charSpacedFields.includes(fieldLabel);
+
+        if (isSpaced) {
+          const container = document.createElement('div');
+          container.className = 'draggable';
+          container.style.left = left + "px";
+          container.style.top = top + "px";
+          container.style.fontSize = fontSize + "px";
+          container.dataset.type = "text";
+          container.dataset.field = fieldLabel;
+          container.dataset.pageIndex = pageIndex;
+          container.dataset.slotIndex = idx;
+          container.title = fieldLabel;
+
+          let xOff = 0;
+          for (const ch of text) {
+            const span = document.createElement('span');
+            span.textContent = ch;
+            span.style.position = 'relative';
+            span.style.left = xOff + "px";
+            container.appendChild(span);
+            xOff += charSpacing;
+          }
+          const label = document.createElement('div');
+          label.textContent = fieldLabel;
+          label.className = 'hint ghost';
+          label.style.fontSize = Math.max(10, fontSize * 0.7) + "px";
+          label.style.marginTop = "2px";
+          container.appendChild(label);
+
+          overlay.appendChild(container);
+
+          makeDraggable(container, (el) => {
+            const leftPx = parseFloat(el.style.left);
+            const topPx = parseFloat(el.style.top);
+            const pdfX = leftPx / scale;
+            const pdfY = (canvas.height - topPx - fontSize) / scale;
+            coordinates[pageIndex][fieldLabel].coords[idx].pos = [Number(pdfX.toFixed(2)), Number(pdfY.toFixed(2))];
+          });
+        } else {
+          const div = document.createElement('div');
+          div.className = 'draggable';
+          div.style.left = left + "px";
+          div.style.top = top + "px";
+          div.style.fontSize = fontSize + "px";
+          div.dataset.type = "text";
+          div.dataset.field = fieldLabel;
+          div.dataset.pageIndex = pageIndex;
+          div.dataset.slotIndex = idx;
+          div.title = fieldLabel;
+          div.textContent = text;
+
+          const lab = document.createElement('div');
+          lab.textContent = `  ⟢ ${fieldLabel}`;
+          lab.className = 'hint ghost';
+          lab.style.fontSize = Math.max(10, fontSize * 0.7) + "px";
+          lab.style.marginTop = "2px";
+          div.appendChild(lab);
+
+          overlay.appendChild(div);
+
+          makeDraggable(div, (el) => {
+            const leftPx = parseFloat(el.style.left);
+            const topPx = parseFloat(el.style.top);
+            const pdfX = leftPx / scale;
+            const pdfY = (canvas.height - topPx - fontSize) / scale;
+            coordinates[pageIndex][fieldLabel].coords[idx].pos = [Number(pdfX.toFixed(2)), Number(pdfY.toFixed(2))];
+          });
+        }
+      });
+    });
+
+    if (photo_signature.photo && photo_signature.photo[0] && currentPage === 1) {
+      const ps = photo_signature.photo[0];
+      if (photoObjectUrl) {
+        const img = document.createElement('img');
+        img.src = photoObjectUrl;
+        img.style.position = 'absolute';
+        const { left, top } = pdfToOverlay({ x: ps.x, y: ps.y, fontSize: ps.height });
+        img.style.left = (left) + "px";
+        img.style.top = (top) + "px";
+        img.style.width = (ps.width * scale) + "px";
+        img.style.height = (ps.height * scale) + "px";
+        img.className = 'draggable';
+        img.dataset.type = "photo";
+        img.dataset.pageIndex = "0";
+        overlay.appendChild(img);
+
+        makeDraggable(img, (el) => {
+          const leftPx = parseFloat(el.style.left);
+          const topPx = parseFloat(el.style.top);
+          const pdfX = leftPx / scale;
+          const pdfY = (canvas.height - topPx - ps.height) / scale;
+          photo_signature.photo[0].x = Number(pdfX.toFixed(2));
+          photo_signature.photo[0].y = Number(pdfY.toFixed(2));
+        });
+      }
+    }
+
+    if (photo_signature.signature && photo_signature.signature[pageIndex]) {
+      const sigs = photo_signature.signature[pageIndex];
+      sigs.forEach((sig, idx) => {
+        if (!signatureObjectUrl) return;
+        const img = document.createElement('img');
+        img.src = signatureObjectUrl;
+        img.style.position = 'absolute';
+        const { left, top } = pdfToOverlay({ x: sig.x, y: sig.y, fontSize: sig.height });
+        img.style.left = left + "px";
+        img.style.top = top + "px";
+        img.style.width = (sig.width * scale) + "px";
+        img.style.height = (sig.height * scale) + "px";
+        img.className = 'draggable';
+        img.dataset.type = "signature";
+        img.dataset.pageIndex = pageIndex;
+        img.dataset.slotIndex = idx;
+        overlay.appendChild(img);
+
+        makeDraggable(img, (el) => {
+          const leftPx = parseFloat(el.style.left);
+          const topPx = parseFloat(el.style.top);
+          const pdfX = leftPx / scale;
+          const pdfY = (canvas.height - topPx - sig.height) / scale;
+          photo_signature.signature[pageIndex][idx].x = Number(pdfX.toFixed(2));
+          photo_signature.signature[pageIndex][idx].y = Number(pdfY.toFixed(2));
+        });
+      });
+    }
+
+    if (photo_signature.stamps && photo_signature.stamps[pageIndex]) {
+      photo_signature.stamps[pageIndex].forEach((st, idx) => {
+        const img = document.createElement('img');
+        img.src = `Stamps/${st.file}`;
+        img.style.position = 'absolute';
+        const { left, top } = pdfToOverlay({ x: st.x, y: st.y, fontSize: st.height });
+        img.style.left = left + "px";
+        img.style.top = top + "px";
+        img.style.width = (st.width * scale) + "px";
+        img.style.height = (st.height * scale) + "px";
+        img.className = 'draggable';
+        img.dataset.type = "stamp";
+        img.dataset.pageIndex = pageIndex;
+        img.dataset.slotIndex = idx;
+        img.title = `Stamp: ${st.file}`;
+        overlay.appendChild(img);
+
+        makeDraggable(img, (el) => {
+          const leftPx = parseFloat(el.style.left);
+          const topPx = parseFloat(el.style.top);
+          const pdfX = leftPx / scale;
+          const pdfY = (canvas.height - topPx - st.height) / scale;
+          photo_signature.stamps[pageIndex][idx].x = Number(pdfX.toFixed(2));
+          photo_signature.stamps[pageIndex][idx].y = Number(pdfY.toFixed(2));
+        });
+      });
+    }
+  }
+
+  // Toggle showing faint labels after text
+  let labelsVisible = true;
+  function toggleLabels() {
+    labelsVisible = !labelsVisible;
+    overlay.querySelectorAll('.hint').forEach(n => {
+      n.style.display = labelsVisible ? 'block' : 'none';
+    });
+  }
+
+  // Save updated coordinates as a .js file
+  function saveCoordinates() {
+    const pdfName = $('#pdfSelect').value || 'Coordinates';
+    const nameNoExt = pdfName.replace(/\.pdf$/i, '');
+    const payload = {
+      coordinates,
+      field_mapping,
+      charSpacedFields,
+      photo_signature
+    };
+    const js = "window.dynamicCoordinates = " + JSON.stringify(payload, null, 2) + ";";
+    const blob = new Blob([js], { type: "application/javascript" });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nameNoExt + ".js";
+    a.click();
+  }
+
+  // ======== Event wiring & boot ========
+  window.addEventListener('DOMContentLoaded', async () => {
+    canvas = $('#pdfCanvas');
+    ctx = canvas.getContext('2d');
+    overlay = $('#overlay');
+
+    // Wait for pdf.js to load
+    try {
+      await waitForPdfJs();
+    } catch (error) {
+      console.error('Error loading pdf.js:', error);
+      alert('Failed to load pdf.js library. Ensure lib/pdf.min.js and lib/pdf.worker.min.js are in the lib/ folder.');
+      return;
+    }
+
+    // Load list of PDFs
+    try {
+      await loadPdfList();
+    } catch (e) {
+      alert("Failed to load PDF list");
+      console.error(e);
+    }
+
+    // On PDF select -> load PDF + its coordinates
+    $('#pdfSelect').addEventListener('change', async function() {
+      const pdfName = this.value;
+      if (!pdfName) return;
+      const base = pdfName.replace(/\.pdf$/i, '');
+      try {
+        await loadCoordinatesForPDF(base);
+      } catch (e) {
+        alert(e.message);
+        console.error(e);
+      }
+      await openPdf(`Pdf/${encodeURIComponent(pdfName)}`);
+    });
+
+    // Data file upload
+    $('#dataFileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        parsedForms = parseDataFile(ev.target.result);
+        currentRecordIndex = 0;
+        updatePageInfo();
+        if (pdfDoc) drawOverlayForPage(currentPage);
+        alert(`Parsed ${parsedForms.length} record(s).`);
+      };
+      reader.readAsText(file);
+    });
+
+    // Photo upload
+    $('#photoInput').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (photoObjectUrl) URL.revokeObjectURL(photoObjectUrl);
+      photoObjectUrl = URL.createObjectURL(f);
+      if (pdfDoc) drawOverlayForPage(currentPage);
+    });
+
+    // Signature upload
+    $('#signatureInput').addEventListener('change', (e) => {
+      const f = e.target.files[0];
+      if (!f) return;
+      if (signatureObjectUrl) URL.revokeObjectURL(signatureObjectUrl);
+      signatureObjectUrl = URL.createObjectURL(f);
+      if (pdfDoc) drawOverlayForPage(currentPage);
+    });
+
+    // Page navigation
+    $('#prevPageBtn').addEventListener('click', async () => {
+      if (!pdfDoc) return;
+      if (currentPage > 1) { currentPage--; await renderPage(currentPage); updatePageInfo(); }
+    });
+    $('#nextPageBtn').addEventListener('click', async () => {
+      if (!pdfDoc) return;
+      if (currentPage < totalPages) { currentPage++; await renderPage(currentPage); updatePageInfo(); }
+    });
+
+    // Record navigation
+    $('#prevRecordBtn').addEventListener('click', () => {
+      if (parsedForms.length === 0) return;
+      currentRecordIndex = (currentRecordIndex - 1 + parsedForms.length) % parsedForms.length;
+      updatePageInfo();
+      if (pdfDoc) drawOverlayForPage(currentPage);
+    });
+    $('#nextRecordBtn').addEventListener('click', () => {
+      if (parsedForms.length === 0) return;
+      currentRecordIndex = (currentRecordIndex + 1) % parsedForms.length;
+      updatePageInfo();
+      if (pdfDoc) drawOverlayForPage(currentPage);
+    });
+
+    // Toggle labels + Save
+    $('#toggleLabelsBtn').addEventListener('click', toggleLabels);
+    $('#saveCoordsBtn').addEventListener('click', saveCoordinates);
+
+    // Auto-load the first PDF
+    const first = $('#pdfSelect').value;
+    if (first) {
+      const base = first.replace(/\.pdf$/i, '');
+      try {
+        await loadCoordinatesForPDF(base);
+        await openPdf(`Pdf/${encodeURIComponent(first)}`);
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  });
+  </script>
+</body>
+</html>

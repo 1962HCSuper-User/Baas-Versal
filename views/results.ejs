@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ledger Results</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <style>
+    body { font-family: Arial; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f4f4f4; }
+    a { text-decoration: none; color: blue; }
+     /* ====== GLOBAL ====== */
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f4f6f9;
+      color: #333;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: 0;
+    }
+
+    /* ====== HEADER ====== */
+    header {
+      background: linear-gradient(90deg, #004080, #0066cc);
+      color: white;
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    /* ====== NAV ====== */
+    nav {
+      background: #0055aa;
+      display: flex;
+      justify-content: center;
+      padding: 12px 0;
+    }
+
+    nav a {
+      color: white;
+      font-weight: 500;
+      margin: 0 20px;
+      font-size: 15px;
+      position: relative;
+    }
+
+    nav a::after {
+      content: "";
+      display: block;
+      height: 2px;
+      background: white;
+      width: 0;
+      transition: width 0.3s ease;
+      margin: 0 auto;
+    }
+
+    nav a:hover::after {
+      width: 100%;
+    }
+
+        /* ====== FOOTER ====== */
+    footer {
+      background: #004080;
+      color: white;
+      text-align: center;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 768px) {
+
+      header,
+      main {
+        padding: 20px;
+      }
+
+      nav {
+        flex-wrap: wrap;
+      }
+
+      nav a {
+        margin: 10px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+    }
+
+    .quick-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 15px;
+    }
+
+    .link-box {
+      background: #f9fbff;
+      border: 1px solid #e0e7ff;
+      border-radius: 10px;
+      padding: 25px 20px;
+      text-align: center;
+      color: #004080;
+      font-weight: 500;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .link-box .icon {
+      font-size: 32px;
+      margin-bottom: 12px;
+      transition: transform 0.3s ease;
+    }
+
+    .link-box:hover {
+      background: #004080;
+      color: white;
+      transform: translateY(-5px);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .link-box:hover .icon {
+      transform: scale(1.2) rotate(10deg);
+    }
+
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Sahara India Pariwar</h1>
+     <h4>📑 Ledger Data for Account <%= account %></h4>
+         <span>Secure • Reliable • Professional</span>
+
+  <a href="/">⬅ Back to Search</a>
+
+  </header>
+  <!-- NAVIGATION -->
+  <nav>
+    <a href="/">Home</a>
+    <a href="/Sahara_Credit">Sahara Credit Cooperative Society Ltd.</a>
+    <a href="/amount">Deposit Amount Check</a>
+    <a href="/sarayan">Universal</a>
+    <a href="/AddUser">Add New User</a>
+
+    <a href="/reports">Other Portal</a>
+    <a href="/about">About</a>
+
+  </nav>
+
+ 
+
+<% if (data.length === 0) { %>
+  <p>No records found.</p>
+<% } else { %>
+  <table>
+    <tr>
+      <th>YFACODE</th>
+      <th>YCRAMOUNT</th>
+      <th>YDRAMOUNT</th>
+      <th>YTAG</th>
+      <th>YPTYTRANSDT</th>
+      <th>AHEADNAME</th>
+      <th>YDOCREFNO</th>
+      <th>YDEPOSTMODE</th>
+    </tr>
+    <% data.forEach(row => { %>
+      <tr>
+        <td><%= row.YFACODE %></td>
+        <td><%= row.YCRAMOUNT %></td>
+        <td><%= row.YDRAMOUNT %></td>
+        <td><%= row.YTAG %></td>
+        <td><%= row.YPTYTRANSDT %></td>
+        <td><%= row.AHEADNAME %></td>
+        <td><%= row.YDOCREFNO %></td>
+        <td><%= row.YDEPOSTMODE %></td>
+      </tr>
+    <% }) %>
+
+    <!-- Totals row -->
+    <tr style="font-weight: bold; background: #f9f9f9;">
+  <td>Total</td>
+  <td><%= totalCr %></td>
+  <td><%= totalDr %></td>
+  <td colspan="5"></td>
+</tr>
+
+  </table>
+<% } %>
+
+</body>
+</html>

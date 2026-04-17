@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Request Password Reset</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6f8; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .container { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 6px 16px rgba(0,0,0,0.08); width: 350px; text-align: center; }
+    input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 12px 20px; background: #0d6efd; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #0b5ed7; }
+    .message { margin-top: 15px; font-size: 14px; color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Password Reset</h2>
+    <p>Enter your email to receive a password reset link.</p>
+    <input type="email" id="email" placeholder="Your email" required>
+    <button id="sendBtn">Send Reset Link</button>
+    <p class="message" id="msg"></p>
+  </div>
+
+  <script>
+    document.getElementById('sendBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const msgEl = document.getElementById('msg');
+      msgEl.textContent = '';
+
+      if (!email) { msgEl.textContent = 'Email is required'; msgEl.className='message error'; return; }
+
+      try {
+        const res = await fetch('/api/request-reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          msgEl.textContent = data.message;
+          msgEl.className = 'message';
+        } else {
+          msgEl.textContent = data.error || 'Error occurred';
+          msgEl.className = 'message error';
+        }
+      } catch (err) {
+        msgEl.textContent = 'Server error';
+        msgEl.className = 'message error';
+      }
+    });
+  </script>
+</body>
+</html>

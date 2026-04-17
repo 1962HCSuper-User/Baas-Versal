@@ -1,0 +1,87 @@
+ "HICCSL": {
+     "pdf_file": "HICCSL.pdf",
+      "coordinates": {
+        0: {
+           "Full_Name": {"coords": [(101.28, 571.75+2)], "char_spacing": 0, "font_size": 12},
+"Father\Husband name": {"coords": [(131.40, 557.79+2)], "char_spacing": 0, "font_size": 12},
+"Address": {"coords": [(107.16, 543.83),(94.67, 528.40+2)], "char_spacing": 0, "font_size": 12},
+"Membership no": {"coords": [(122.68, 56.70-17)], "char_spacing": 0, "font_size": 15},
+"Date of birth": {"coords": [(232.78-3 , 515.91+1)], "char_spacing": 10, "font_size": 12},
+"AGE": {"coords": [(345.91, 517.38)], "char_spacing": 0, "font_size": 12},
+"Sex": {"coords": [(469.33, 518.85+2)], "char_spacing": 0, "font_size": 12},
+"Aadhar card": {"coords": [(66.02, 496.07+2)], "char_spacing": 17-3, "font_size": 12},
+"Pan card": {"coords": [(302.57, 499.75+2)], "char_spacing": 17-3, "font_size": 12},
+"Nominee name": {"coords": [(137.28, 485.79)], "char_spacing": 0, "font_size": 12},
+"Nominee relation": {"coords": [(122.59, 471.09)], "char_spacing": 0, "font_size": 12},
+"Nominee age": {"coords": [(489.16, 476.24)], "char_spacing": 0, "font_size": 12},
+"Member type ": {
+                    "coords": [(40.84, 300.44)], 
+                    "char_spacing": 0, 
+                    "font_size": 10,
+                    "checkmarks": {  # New checkmarks section
+                        "Nominal": {"coords": [(158, 240)], "char_spacing": 0, "font_size": 20},
+                        "Regular": {"coords": [(268, 242)], "char_spacing": 0, "font_size": 20}
+                    }
+                },
+"Occupation": {
+                    "coords": [(71.90, 513.71+2)], 
+                    "char_spacing": 0, 
+                    "font_size": 12,
+                    "checkmarks": {
+"Business": {"coords": [(179.89, 156.93)], "char_spacing": 0, "font_size": 14},
+"farmer": {"coords": [(448.03, 140.03)], "char_spacing": 0, "font_size": 14},
+"Service": {"coords": [(111.57, 156.93)], "char_spacing": 21, "font_size": 16},
+"Housewife": {"coords": [(182.83, 137.83)], "char_spacing": 21, "font_size": 16},
+                    }
+                },
+"Education": {
+                    "coords": [(40.84, 300.44)], 
+                    "char_spacing": 0, 
+                    "font_size": 10,
+                    "checkmarks": {
+"SSC": {"coords": [(180.62, 180.44)], "char_spacing": 21, "font_size": 16},
+"PG": {"coords": [(342.24, 178.24)], "char_spacing": 21, "font_size": 16},
+"UG": {"coords": [(260.70, 178.97)], "char_spacing": 21, "font_size": 16},
+"Professional": {"coords": [(458.31, 178.97)], "char_spacing": 21, "font_size": 16},
+                    }
+                },                   
+"Manager name": {"coords": [(132.14-55, 377.05+16)], "char_spacing": 0, "font_size": 12},
+"Manager father name": {"coords": [(132.14, 377.05+2)], "char_spacing": 0, "font_size": 12},
+"Manager address": {"coords": [(57.94, 362.36+2)], "char_spacing": 0, "font_size": 12},
+"Proof document": {"coords": [(27.82, 296.97)], "char_spacing": 0, "font_size": 12},
+"Proof document 2": {"coords": [(302.57, 299.18)], "char_spacing": 0, "font_size": 12},
+"Mobile no": {"coords": [(217.35, 263.18)], "char_spacing": 0, "font_size": 12},
+"Email": {"coords": [(358.40, 263.91)], "char_spacing": 0, "font_size": 12},
+"Religion": {"coords": [(61.61, 222.03+2)], "char_spacing": 0, "font_size": 12},
+"State": {"coords": [(266.57, 223.50+2)], "char_spacing": 0, "font_size": 12},
+"Country": {"coords": [(453.17, 225.71+2)], "char_spacing": 0, "font_size": 12},
+"Relation status": {"coords": [(232.78, 203.67+2)], "char_spacing": 0, "font_size": 12},
+      },
+   
+      },
+    "fields_by_page": {
+            0: ["Membership no","Proof document", 
+              "Proof document 2","Education","Member type","Country",
+              "Mobile no", "Email", "Religion",  "State", "Relation status",
+              "Full_Name", "Father\Husband name", "Address", "Occupation",
+            "Date of birth", "AGE", "Sex", "Aadhar card", "Pan card", "Nominee name", "Nominee relation",
+              "Nominee age", "Manager name", "Manager father name", "Manager address",  ],  # PDF Page 1 fields            # PDF Page 2 fields
+            },
+        "photo": {0:{"x": 331.62-30, "y": 384.89-40, "width": 75, "height": 100}},
+        "signature": {0:[{"x": 231, "y": 384.89-80, "width": 110, "height": 110},
+                         {"x": 424.36, "y": 117.43-50, "width": 110, "height": 110},
+                         {"x": 424.36+15, "y": 384.89-10, "width": 110, "height": 110}],
+        },
+        "stamps":{0: [
+            {"file": "Sarayan2.png","x": 331+18, "y": 384, "width": 100, "height": 100},            
+            {"file": "Sarayan2.png","x": 220+40, "y": 15+30, "width": 100, "height": 100},
+
+            {"file": "Msin.png","x": 68.96, "y": 105, "width": 75, "height": 75},
+             {"file": "Msing.png","x": 68.96, "y": 70, "width": 90, "height": 90},
+             
+             {"file": "Msin.png","x": 502, "y": 42+2, "width": 90, "height": 90},
+             {"file": "Msing.png","x": 502-10, "y": 42-33, "width": 90, "height": 90},
+             ]
+        },            
+             "required_fields": ["Full_Name", "Membership no"]
+    },

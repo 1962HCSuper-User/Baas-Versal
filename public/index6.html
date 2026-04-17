@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Filler</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 20px; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+    }
+    h2 { 
+      text-align: center; 
+      color: #4a4a4a; 
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    input[type="file"], button, select { 
+      display: block; 
+      margin: 10px auto; 
+      padding: 10px; 
+      border-radius: 5px; 
+      border: 1px solid #ccc;
+      transition: all 0.3s ease;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: scale(1.05);
+    }
+    select {
+      width: 300px;
+      background-color: white;
+    }
+    canvas { display: none; }
+    .form-section { 
+      margin-bottom: 20px; 
+      padding: 20px; 
+      background: white; 
+      border-radius: 10px; 
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin: 10px 0;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    th, td { 
+      border: 1px solid #ddd; 
+      padding: 12px; 
+      text-align: left; 
+    }
+    th { 
+      background-color: #007bff; 
+      color: white; 
+    }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #f1f1f1; }
+    label { 
+      display: block; 
+      margin: 10px 0; 
+      font-weight: bold;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      transition: border 0.3s;
+    }
+    input[type="text"]:focus {
+      border-color: #007bff;
+      outline: none;
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin: 20px;
+    }
+    .spinner {
+      border: 4px solid rgba(0, 123, 255, 0.3);
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Graphics: Add subtle icons using pseudo-elements or emojis */
+    h3::before {
+      content: '📝 ';
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h2>PDF Filler Web App</h2>
+  <label>Select PDF:</label>
+  <select id="pdfSelect"></select>
+
+  <label>Select TXT File from Pending:</label>
+  <select id="txtSelect">
+    <option value="">-- Select TXT File --</option>
+  </select>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <div id="memberFormContainer" class="form-section" style="display: none;"></div>
+  <button id="nextBtn" style="display: none;">Next</button>
+
+  <div id="accountsContainer" class="form-section" style="display: none;"></div>
+  <button id="updateBtn" style="display: none;">Update TXT and Proceed</button>
+
+  <label>Upload Photo:</label>
+  <input type="file" id="photoInput" accept="image/*">
+
+  <label>Upload Signature:</label>
+  <input type="file" id="signatureInput" accept="image/*">
+
+  <label><input type="checkbox" id="textOnly"> Download text-only filled PDF (no photo, signature, stamps)</label>
+
+  <button id="generatePdfBtn" style="display: none;" onclick="fillPdf()">Download Filled PDF</button>
+
+  <canvas id="pdfCanvas"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  
+  <script>
+
+let parsedForms = [];
+let memberInfo = {};
+let accountInfos = [];
+let schemeMapping = {};
+let selectedTxtFile = '';
+let coordinates = {};
+let field_mapping = {};
+let charSpacedFields = [];
+let photo_signature = {};
+
+async function loadSchemeMapping() {
+  showLoading(true);
+  try {
+    const response = await fetch('/Refrence/Refrence.txt');
+    const content = await response.text();
+    const lines = content.split('\n').filter(l => l.trim());
+    lines.forEach(line => {
+      if (line.includes(':')) {
+        const [key, value] = line.split(':').map(s => s.trim());
+        schemeMapping[key] = value;
+      }
+    });
+    console.log('Scheme mapping loaded:', schemeMapping);
+  } catch (err) {
+    console.error('Failed to load scheme mapping:', err);
+    alert('Failed to load scheme reference file. Please check /Refrence/Refrence.txt');
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadCoordinatesForPDF(pdfName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `Coordinates/${pdfName}.js?cacheBust=${Date.now()}`;
+    script.onload = () => {
+      if (window.dynamicCoordinates) {
+        coordinates = window.dynamicCoordinates.coordinates;
+        field_mapping = window.dynamicCoordinates.field_mapping;
+        charSpacedFields = window.dynamicCoordinates.charSpacedFields;
+        photo_signature = window.dynamicCoordinates.photo_signature;
+        window.dynamicCoordinates = null; // clear after use
+        resolve();
+      } else {
+        reject(new Error("No coordinates found in JS file"));
+      }
+    };
+    script.onerror = () => reject(new Error(`Failed to load coordinates for ${pdfName}`));
+    document.body.appendChild(script);
+  });
+}
+
+function parseDataFile(content) {
+  const blocks = content.split(/-{5,}/g).map(b => b.trim()).filter(b => b.length);
+
+  memberInfo = {};
+  accountInfos = [];
+
+  blocks.forEach(block => {
+    if (block.startsWith("=== MEMBER INFO ===")) {
+      memberInfo = parseKeyValueBlock(block);
+    } else if (block.startsWith("=== ACCOUNT INFO")) {
+      const accountInfo = parseKeyValueBlock(block);
+      accountInfos.push(accountInfo);
+    }
+  });
+
+  // Combine for PDF filling (as before)
+  parsedForms = accountInfos.map(account => ({ ...memberInfo, ...account }));
+
+  return parsedForms;
+}
+
+function parseKeyValueBlock(block) {
+  const lines = block.split("\n");
+  const data = {};
+  lines.forEach(line => {
+    if (!line.includes(":")) return;
+    const [key, ...rest] = line.split(":");
+    data[key.trim()] = rest.join(":").trim();
+  });
+  return data;
+}
+
+async function loadTxtFilesList() {
+  showLoading(true);
+  try {
+    const response = await fetch('/api/txt-list'); // Assuming server endpoint for listing TXT files in public/Pending
+    const txtFiles = await response.json();
+    const select = document.getElementById('txtSelect');
+    txtFiles.forEach(txt => {
+      const option = document.createElement('option');
+      option.value = txt;
+      option.textContent = txt;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    alert('Failed to load TXT list from Pending folder');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function displayMemberDetails() {
+  const container = document.getElementById('memberFormContainer');
+  container.innerHTML = '<h3>Member Details (Editable)</h3>';
+  container.style.display = 'block';
+
+  const form = document.createElement('form');
+  const memberKeys = ['fullName', 'guardianName', 'dateOfBirth', 'AGE', 'address', 'houseNo', 'Village', 'street', 'post', 'district', 'pincode', 'address', "mobileNo", 'panCard', 'centreName' ];
+  memberKeys.forEach(key => {
+    if (memberInfo.hasOwnProperty(key)) {
+      const label = document.createElement('label');
+      label.textContent = `${key}: `;
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = memberInfo[key] || '';
+      input.dataset.key = key;
+      label.appendChild(input);
+      form.appendChild(label);
+      form.appendChild(document.createElement('br'));
+    }
+  });
+  container.appendChild(form);
+
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function displayAccounts() {
+  const container = document.getElementById('accountsContainer');
+  container.innerHTML = '<h3>Account Information (Editable)</h3>';
+  container.style.display = 'block';
+
+  accountInfos.forEach((account, index) => {
+    const table = document.createElement('table');
+    const thead = document.createElement('thead');
+    const tbody = document.createElement('tbody');
+    const trHead = document.createElement('tr');
+    trHead.innerHTML = '<th>Key</th><th>Value</th>';
+    thead.appendChild(trHead);
+
+    const accountKeys = ['accountNo', 'certificateNo', 'receiptNo', 'applicationNo', 'denomination', 'accountOpeningDate', 'nomineeName', 'nomineeRelation', 'nomineeAge'];
+    accountKeys.forEach(key => {
+      if (account.hasOwnProperty(key)) {
+        const tr = document.createElement('tr');
+        const tdKey = document.createElement('td');
+        tdKey.textContent = key;
+        const tdValue = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.value = account[key] || '';
+        input.dataset.key = key;
+        input.dataset.accountIndex = index;
+        if (key === 'certificateNo' && (!account[key] || account[key] === '0')) {
+          input.style.border = '2px solid red'; // Highlight required
+        }
+        tdValue.appendChild(input);
+        tr.appendChild(tdKey);
+        tr.appendChild(tdValue);
+        tbody.appendChild(tr);
+      }
+    });
+
+    table.appendChild(thead);
+    table.appendChild(tbody);
+    container.appendChild(table);
+    container.appendChild(document.createElement('hr'));
+  });
+
+  document.getElementById('updateBtn').style.display = 'block';
+}
+
+async function updateTxtFile() {
+  // Collect updated member info
+  const memberInputs = document.querySelectorAll('#memberFormContainer input');
+  memberInputs.forEach(input => {
+    memberInfo[input.dataset.key] = input.value.trim();
+  });
+
+  // Collect updated account infos
+  const accountInputs = document.querySelectorAll('#accountsContainer input');
+  accountInputs.forEach(input => {
+    const index = input.dataset.accountIndex;
+    const key = input.dataset.key;
+    accountInfos[index][key] = input.value.trim();
+  });
+
+  // Validate certificateNo for all accounts
+  let valid = true;
+  accountInfos.forEach(account => {
+    if (!account.certificateNo || account.certificateNo === '0') {
+      valid = false;
+    }
+  });
+  if (!valid) {
+    alert('Please fill all certificateNo fields that are empty or 0.');
+    return;
+  }
+
+  // Reconstruct TXT content
+  let txtContent = '=== MEMBER INFO ===\n';
+  for (let key in memberInfo) {
+    txtContent += `${key}: ${memberInfo[key]}\n`;
+  }
+  txtContent += '---------------------\n\n';
+
+  accountInfos.forEach(account => {
+    txtContent += '=== ACCOUNT INFO ===\n'; // Adjust if form-specific
+    for (let key in account) {
+      txtContent += `${key}: ${account[key]}\n`;
+    }
+    txtContent += '---------------------\n\n';
+  });
+
+  showLoading(true);
+  try {
+    const response = await fetch('/api/save-txt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: selectedTxtFile, content: txtContent })
+    });
+    if (response.ok) {
+      alert('TXT file updated successfully!');
+      // Re-parse for PDF filling
+      parseDataFile(txtContent);
+      // Show generate button
+      document.getElementById('generatePdfBtn').style.display = 'block';
+    } else {
+      alert('Failed to update TXT file.');
+    }
+  } catch (err) {
+    alert('Error saving TXT file.');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadImageBytes(file) {
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = () => resolve(new Uint8Array(reader.result));
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const pdfSelect = document.getElementById("pdfSelect");
+  showLoading(true);
+  try {
+    const response = await fetch("/api/pdf-list");
+    const pdfs = await response.json();
+    pdfs.forEach(pdf => {
+      const option = document.createElement("option");
+      option.value = pdf;
+      option.textContent = pdf;
+      pdfSelect.appendChild(option);
+    });
+  } catch (err) {
+    alert("Failed to load PDF list");
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+
+  await loadSchemeMapping();
+  await loadTxtFilesList();
+});
+
+document.getElementById("pdfSelect").addEventListener("change", async function() {
+  const pdfName = this.value.replace(/\.pdf$/i, "");
+  showLoading(true);
+  try {
+    await loadCoordinatesForPDF(pdfName);
+    console.log("Coordinates loaded for", pdfName);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    showLoading(false);
+  }
+});
+
+document.getElementById("txtSelect").addEventListener("change", async function() {
+  selectedTxtFile = this.value;
+  if (!selectedTxtFile) return;
+
+  showLoading(true);
+  try {
+    const response = await fetch(`public/Pending/${selectedTxtFile}`);
+    const content = await response.text();
+    parseDataFile(content);
+    displayMemberDetails();
+    document.getElementById('accountsContainer').style.display = 'none';
+    document.getElementById('updateBtn').style.display = 'none';
+    document.getElementById('generatePdfBtn').style.display = 'none';
+  } catch (err) {
+    alert('Failed to load TXT file content');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+});
+
+document.getElementById("nextBtn").addEventListener("click", function() {
+  // Update memberInfo from inputs
+  const inputs = document.querySelectorAll('#memberFormContainer input');
+  inputs.forEach(input => {
+    memberInfo[input.dataset.key] = input.value.trim();
+  });
+
+  // Validate PAN and mobile
+//   const pan = memberInfo.panCard || '';
+//   const mobile = memberInfo.mobileNo || '';
+//   if (!pan || !mobile) {
+//     alert('PAN and Mobile fields must be filled.');
+//     return;
+//   }
+
+  // Proceed to accounts
+  document.getElementById('memberFormContainer').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  displayAccounts();
+});
+
+document.getElementById("updateBtn").addEventListener("click", updateTxtFile);
+
+async function fillPdf() {
+  const photoFile = document.getElementById('photoInput').files[0];
+  const signatureFile = document.getElementById('signatureInput').files[0];
+  const textOnly = document.getElementById('textOnly').checked;
+
+  if (parsedForms.length === 0) {
+    alert("No data loaded. Please select and process a TXT file first.");
+    return;
+  }
+
+  if (Object.keys(schemeMapping).length === 0) {
+    alert("Scheme mapping not loaded. Please refresh and try again.");
+    return;
+  }
+
+  if (!textOnly && photoFile && signatureFile) {
+    // Proceed with images
+  } else if (!textOnly) {
+    const confirmSkip = confirm("Photo or signature missing. Proceed with text-only?");
+    if (!confirmSkip) return;
+    textOnly = true;
+  }
+
+  let photoBytes, signatureBytes;
+  if (!textOnly && photoFile && signatureFile) {
+    showLoading(true);
+    try {
+      [photoBytes, signatureBytes] = await Promise.all([
+        loadImageBytes(photoFile),
+        loadImageBytes(signatureFile)
+      ]);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  for (let i = 0; i < parsedForms.length; i++) {
+    const formData = parsedForms[i];
+    const schemeCode = formData.schemeName;
+
+    if (!schemeCode) {
+      alert(`No schemeName found for form ${i + 1}. Skipping.`);
+      continue;
+    }
+
+    const pdfName = schemeMapping[schemeCode];
+    if (!pdfName) {
+      alert(`No PDF mapping found for scheme code ${schemeCode} in form ${i + 1}. Skipping.`);
+      continue;
+    }
+
+    const pdfUrl = `Pdf/${encodeURIComponent(pdfName)}`;
+    let basePdfBytes;
+    showLoading(true);
+    try {
+      basePdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+    } catch (err) {
+      alert(`Failed to fetch PDF ${pdfName} for form ${i + 1}. Skipping.`);
+      continue;
+    } finally {
+      showLoading(false);
+    }
+
+    const pdfBaseName = pdfName.replace(/\.pdf$/i, "");
+    showLoading(true);
+    try {
+      await loadCoordinatesForPDF(pdfBaseName);
+    } catch (err) {
+      alert(`Failed to load coordinates for ${pdfName} in form ${i + 1}. Skipping.`);
+      continue;
+    } finally {
+      showLoading(false);
+    }
+
+    const pdfDoc = await PDFLib.PDFDocument.load(basePdfBytes);
+    const pages = pdfDoc.getPages();
+
+    let photoImg, signatureImg;
+    if (!textOnly && photoBytes && signatureBytes) {
+      try {
+        photoImg = await pdfDoc.embedJpg(photoBytes);
+      } catch {
+        photoImg = await pdfDoc.embedPng(photoBytes);
+      }
+
+      try {
+        signatureImg = await pdfDoc.embedPng(signatureBytes);
+      } catch {
+        signatureImg = await pdfDoc.embedJpg(signatureBytes);
+      }
+    }
+
+    for (let pageIndex in coordinates) {
+      const page = pages[pageIndex];
+      for (let key in coordinates[pageIndex]) {
+        const coordInfo = coordinates[pageIndex][key];
+        const fieldKey = field_mapping[key];
+        const text = formData[fieldKey] || "";
+
+        coordInfo.coords.forEach(pos => {
+          const isSpaced = charSpacedFields.includes(key);
+
+          if (isSpaced) {
+            let x = pos.pos[0];
+            for (let char of text) {
+              page.drawText(char, {
+                x: x,
+                y: pos.pos[1],
+                size: pos.font_size || 12,
+                color: PDFLib.rgb(0, 0, 0)
+              });
+              x += pos.char_spacing || 10;
+            }
+          } else {
+            page.drawText(text, {
+              x: pos.pos[0],
+              y: pos.pos[1],
+              size: pos.font_size || 12,
+              color: PDFLib.rgb(0, 0, 0)
+            });
+          }
+        });
+      }
+    }
+
+    if (!textOnly && photoImg && signatureImg) {
+      if (photo_signature.photo?.[0]) {
+        const photoPos = photo_signature.photo[0];
+        pages[0].drawImage(photoImg, {
+          x: photoPos.x,
+          y: photoPos.y,
+          width: photoPos.width,
+          height: photoPos.height
+        });
+      }
+
+      for (let pageIndex in photo_signature.signature) {
+        photo_signature.signature[pageIndex].forEach(sig => {
+          pages[pageIndex].drawImage(signatureImg, {
+            x: sig.x,
+            y: sig.y,
+            width: sig.width,
+            height: sig.height
+          });
+        });
+      }
+
+      for (let pageIndex in photo_signature.stamps) {
+        for (let stamp of photo_signature.stamps[pageIndex]) {
+          const url = `Stamps/${stamp.file}`;
+          const stampBytes = await fetch(url).then(res => res.arrayBuffer());
+          const stampImg = await pdfDoc.embedPng(stampBytes);
+          pages[pageIndex].drawImage(stampImg, {
+            x: stamp.x,
+            y: stamp.y,
+            width: stamp.width,
+            height: stamp.height
+          });
+        }
+      }
+    }
+
+    const finalPdfBytes = await pdfDoc.save();
+    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+
+    const downloadLink = document.createElement('a');
+    const accountNo = formData.accountNo || `form_${i + 1}`;
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `A${accountNo}.pdf`;
+    downloadLink.click();
+
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  alert("All forms have been downloaded!");
+}
+
+</script>
+</body>
+</html>

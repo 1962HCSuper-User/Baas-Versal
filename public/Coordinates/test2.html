@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PDF Form Coordinate Editor</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; background: #0b1220; color: #e9eefb; }
+    header { padding: 10px; background: #121a2b; display: flex; gap: 10px; }
+    #pdf-container { position: relative; width: 100%; height: 90vh; overflow: auto; background: #1e2638; }
+    canvas { display: block; margin: auto; background: #fff; }
+
+    .field {
+      position: absolute;
+      padding: 2px 6px;
+      border: 1px dashed #4af;
+      border-radius: 4px;
+      cursor: move;
+      background: rgba(0,0,0,0.6);
+      font-size: 14px;
+      white-space: nowrap;
+      color: #fff;
+    }
+    .field .controls {
+      margin-top: 2px;
+      display: flex;
+      gap: 4px;
+    }
+    .field input {
+      width: 45px;
+      font-size: 12px;
+      padding: 1px;
+    }
+  </style>
+</head>
+<body>
+<header>
+  <input type="file" id="pdfUpload" accept="application/pdf">
+  <input type="file" id="txtUpload" accept=".txt">
+  <button id="previewBtn">Toggle Preview</button>
+  <button id="downloadBtn">Download JSON</button>
+</header>
+
+<div id="pdf-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+let pdfDoc = null, scale = 1.2, fieldsData = {}, preview = false;
+let coordinates = { coordinates: {} };
+
+document.getElementById('pdfUpload').addEventListener('change', handlePdf);
+document.getElementById('txtUpload').addEventListener('change', handleTxt);
+document.getElementById('previewBtn').addEventListener('click', togglePreview);
+document.getElementById('downloadBtn').addEventListener('click', downloadJson);
+
+async function handlePdf(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fileReader = new FileReader();
+  fileReader.onload = async function() {
+    const typedarray = new Uint8Array(this.result);
+    pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+    renderAllPages();
+  };
+  fileReader.readAsArrayBuffer(file);
+}
+
+function renderAllPages() {
+  const container = document.getElementById('pdf-container');
+  container.innerHTML = "";
+  for (let i = 1; i <= pdfDoc.numPages; i++) renderPage(i, container);
+}
+
+async function renderPage(num, container) {
+  const page = await pdfDoc.getPage(num);
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement("canvas");
+  const context = canvas.getContext("2d");
+  canvas.height = viewport.height;
+  canvas.width = viewport.width;
+  canvas.style.display = "block";
+  canvas.style.margin = "10px auto";
+  container.appendChild(canvas);
+
+  const renderContext = { canvasContext: context, viewport };
+  await page.render(renderContext).promise;
+
+  // Add fields if data exists
+  if (!coordinates.coordinates[num-1]) coordinates.coordinates[num-1] = {};
+  Object.entries(fieldsData).forEach(([key, value]) => {
+    if (!coordinates.coordinates[num-1][key]) {
+      createField(key, value, num-1, container, canvas);
+    }
+  });
+}
+
+function createField(fieldName, fieldValue, pageNum, container, canvas) {
+  const div = document.createElement("div");
+  div.className = "field";
+  div.style.left = "50px";
+  div.style.top = "50px";
+
+  const label = document.createElement("div");
+  label.innerText = preview ? fieldValue : fieldName;
+  div.appendChild(label);
+
+  // Controls for font size + char spacing
+  const controls = document.createElement("div");
+  controls.className = "controls";
+  const fontInput = document.createElement("input");
+  fontInput.type = "number"; fontInput.value = 14; fontInput.title = "Font Size";
+  const spacingInput = document.createElement("input");
+  spacingInput.type = "number"; spacingInput.value = 16; spacingInput.title = "Char Spacing";
+  controls.appendChild(fontInput);
+  controls.appendChild(spacingInput);
+  div.appendChild(controls);
+
+  div.dataset.field = fieldName;
+  div.dataset.page = pageNum;
+
+  // sync dataset with controls
+  fontInput.addEventListener("input", () => div.dataset.fontSize = fontInput.value);
+  spacingInput.addEventListener("input", () => div.dataset.charSpacing = spacingInput.value);
+
+  div.dataset.fontSize = fontInput.value;
+  div.dataset.charSpacing = spacingInput.value;
+
+  makeDraggable(div, container, canvas);
+  container.appendChild(div);
+}
+
+function makeDraggable(el, container, canvas) {
+  let offsetX, offsetY, isDown = false;
+
+  el.addEventListener("mousedown", e => {
+    if (e.target.tagName === "INPUT") return; // don't drag when editing input
+    isDown = true;
+    offsetX = e.offsetX;
+    offsetY = e.offsetY;
+  });
+
+  container.addEventListener("mousemove", e => {
+    if (!isDown) return;
+    const rect = canvas.getBoundingClientRect();
+    let newX = e.clientX - rect.left - offsetX + container.scrollLeft;
+    let newY = e.clientY - rect.top - offsetY + container.scrollTop;
+
+    // Boundaries inside the PDF canvas
+    newX = Math.max(0, Math.min(newX, canvas.width - el.offsetWidth));
+    newY = Math.max(0, Math.min(newY, canvas.height - el.offsetHeight));
+
+    el.style.left = rect.left + newX + "px";
+    el.style.top = rect.top + newY + "px";
+  });
+
+  container.addEventListener("mouseup", () => isDown = false);
+}
+
+function handleTxt(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    fieldsData = parseTxt(reader.result);
+    renderAllPages();
+  };
+  reader.readAsText(file);
+}
+
+function parseTxt(text) {
+  const lines = text.split("\n");
+  const data = {};
+  lines.forEach(line => {
+    const [k, v] = line.split(":").map(s => s.trim());
+    if (k && v !== undefined) data[k] = v;
+  });
+  return data;
+}
+
+function togglePreview() {
+  preview = !preview;
+  document.querySelectorAll(".field").forEach(el => {
+    const key = el.dataset.field;
+    el.firstChild.innerText = preview ? fieldsData[key] : key;
+  });
+}
+
+function downloadJson() {
+  document.querySelectorAll(".field").forEach(el => {
+    const page = el.dataset.page;
+    const key = el.dataset.field;
+
+    // Get position relative to canvas
+    const canvas = document.querySelectorAll("canvas")[page];
+    const rect = canvas.getBoundingClientRect();
+    const x = parseFloat(el.style.left) - rect.left;
+    const y = parseFloat(el.style.top) - rect.top;
+
+    const charSpacing = parseFloat(el.dataset.charSpacing);
+    const fontSize = parseFloat(el.dataset.fontSize);
+
+    coordinates.coordinates[page][key] = {
+      coords: [{ pos: [x, y], char_spacing: charSpacing, font_size: fontSize }]
+    };
+  });
+
+  const blob = new Blob([JSON.stringify(coordinates, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "coordinates.json";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>

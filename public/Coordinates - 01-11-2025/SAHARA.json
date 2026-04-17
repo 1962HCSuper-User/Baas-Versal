@@ -1,0 +1,64 @@
+ "GOLDEN": {
+        "pdf_file": "SAHARA.pdf",
+        "coordinates": {
+            0: {
+                "Membership no": {"coords": [(40.09, 583.45)], "char_spacing": 22, "font_size": 16},
+            },
+            1: { 
+                "Manager name": {"coords": [(40.84, 300.44)], "char_spacing": 0, "font_size": 10},              
+            }
+        },
+        "fields_by_page": {
+            0: ["Membership no", "Full_Name", "Account no"],  
+            1: ["Manager name", "Manager code"]             
+            },
+            "required_fields": ["Full_Name", "Membership no"]},
+
+
+    "SCCSL": {
+        "pdf_file": "SCCSL.pdf",
+        "coordinates": {
+            0: {"Full_Name": {"coords": [(124.99, 489.64)], "char_spacing": 0, "font_size": 14},
+"Father/Husband name": {"coords": [(437.44, 491.81)], "char_spacing": 0, "font_size": 14},
+"Address": {"coords": [(129.33, 470.83),(114.14, 452.75)], "char_spacing": 0, "font_size": 14},
+
+"Occupation": {"coords": [(88.83, 436.84-2)], "char_spacing": 0, "font_size": 14},
+"AGE": {"coords": [(227.69, 433.95)], "char_spacing": 0, "font_size": 14},
+"Nominee name": {"coords": [(151.03, 410.80)], "char_spacing": 0, "font_size": 14},
+"Nominee relation": {"coords": [(156.09, 394.16)], "char_spacing": 0, "font_size": 14},
+"Nominee age": {"coords": [(445.39, 394.89)], "char_spacing": 0, "font_size": 14},
+
+"Proof document": {"coords": [(43.26, 178.62)], "char_spacing": 0, "font_size": 14},
+"Proof document 2": {"coords": [(41.82, 177.90-19)], "char_spacing": 0, "font_size": 14},
+"Membership no": {"coords": [(145.97, 80.20-52)], "char_spacing": 0, "font_size": 18},
+
+"Manager address": {"coords": [(75.09, 246.61)], "char_spacing": 0, "font_size": 14},
+"Manager father name": {"coords": [(156.81, 261.08)], "char_spacing": 0, "font_size": 14},
+"Manager name": {"coords": [(67.13, 276.27)], "char_spacing": 0, "font_size": 14},
+            },
+            
+        },
+        "fields_by_page": {
+            0: ["Membership no","Proof document", "Proof document 2",
+             "Full_Name", "Father/Husband name", "Address", 
+             "Occupation", "AGE", "Nominee name", "Nominee relation", "Nominee age" ,
+            "Manager name", "Manager father name", "Manager address"],            
+            },
+        "photo": {0:{"x": 428.62+40, "y": 80+2, "width": 80, "height": 106}},
+        "signature": {0:[{"x":380+10, "y": 35+8, "width": 110, "height": 110},
+                         {"x": 360+20, "y": 290, "width": 110, "height": 110},
+                         {"x": 60, "y": 290, "width": 110, "height": 110}],
+
+        },
+        "stamps":{0: [
+            {"file": "Sarayan2.png","x": 430-2, "y": 180-8, "width": 100, "height": 100},            
+            {"file": "Sarayan2.png","x": 220+25, "y": 70, "width": 100, "height": 100},
+            {"file": "Msing.png","x": 180, "y": 280-10, "width": 90, "height": 90},
+            {"file": "Msin.png","x": 190, "y": 280+20, "width": 90, "height": 90},
+            {"file": "Msing.png","x": 490, "y": -2, "width": 90, "height": 90},
+            {"file": "Msin.png","x": 480, "y": 20, "width": 90, "height": 90},
+            ]
+        },
+
+            "required_fields": ["Full_Name", "Membership no"]},
+

@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Filler</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 20px; 
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      transition: background-color 0.5s ease;
+    }
+    h2 { 
+      text-align: center; 
+      color: #4a4a4a; 
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      animation: slideInDown 0.5s ease-out;
+    }
+    @keyframes slideInDown {
+      from { transform: translateY(-20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    input[type="file"], button, select { 
+      display: block; 
+      margin: 10px auto; 
+      padding: 12px 20px; 
+      border-radius: 8px; 
+      border: 1px solid #ccc;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    select, input[type="file"] {
+      width: 400px;
+      background-color: white;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    select:hover, input[type="file"]:hover {
+      transform: scale(1.02);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+      font-weight: bold;
+      transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    canvas { display: none; }
+    .form-section { 
+      margin-bottom: 30px; 
+      padding: 25px; 
+      background: white; 
+      border-radius: 12px; 
+      box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.5s forwards;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin: 15px 0;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      animation: fadeIn 0.5s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    th, td { 
+      border: 1px solid #ddd; 
+      padding: 14px; 
+      text-align: left;
+      transition: background-color 0.3s ease;
+    }
+    th { 
+      background-color: #007bff; 
+      color: white;
+    }
+    tr:nth-child(even) { background-color: #f9f9f9; }
+    tr:hover { background-color: #f1f1f1; }
+    label { 
+      display: flex; 
+      align-items: center; 
+      margin: 12px 0; 
+      font-weight: bold;
+      gap: 10px;
+    }
+    .horizontal-form-group {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+    }
+    .horizontal-form-group:hover {
+      transform: translateX(5px);
+    }
+    .horizontal-form-group span {
+      flex: none;
+      font-weight: bold;
+      white-space: nowrap;
+      color: #555;
+    }
+    .horizontal-form-group select,
+    .horizontal-form-group input[type="file"] {
+      flex: 1;
+      max-width: 400px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+    }
+    .form-group:hover {
+      transform: scale(1.01);
+    }
+    .form-group label {
+      flex: none;
+      width: auto;
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+      font-weight: 600;
+    }
+    .form-group input[type="text"] {
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      transition: border 0.3s, box-shadow 0.3s, transform 0.3s;
+      font-size: 14px;
+    }
+    .form-group input[type="text"]:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+      transform: scale(1.02);
+    }
+    #loading {
+      display: none;
+      text-align: center;
+      margin: 20px;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .spinner {
+      border: 5px solid rgba(0, 123, 255, 0.3);
+      border-top: 5px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    h3::before {
+      content: '📝 ';
+      margin-right: 8px;
+    }
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: normal;
+      transition: color 0.3s ease;
+    }
+    .checkbox-label:hover {
+      color: #007bff;
+    }
+    .checkbox-label input {
+      margin: 0;
+    }
+    .section-block {
+      margin-bottom: 25px;
+      padding: 20px;
+      background: #fdfdfd;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+    }
+    .section-block:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transform: translateY(-5px);
+    }
+    .section-block h4 {
+      margin-bottom: 20px;
+      color: #007bff;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+    .section-block h4:hover {
+      color: #0056b3;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .grid-2 .form-group {
+      margin: 0;
+    }
+    /* New styles for professional address handling */
+    .contact-section .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* Adjusted for better spacing */
+    }
+    .contact-section .form-group textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      font-size: 14px;
+      transition: border 0.3s, box-shadow 0.3s, transform 0.3s;
+    }
+    .contact-section .form-group textarea:focus {
+      border-color: #007bff;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+      transform: scale(1.02);
+    }
+    .full-width {
+      grid-column: 1 / -1;
+    }
+    /* Preview styles */
+    .preview-container {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .preview-img {
+      max-width: 250px; /* Balanced size */
+      max-height: 250px; /* Balanced size */
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.3s ease, opacity 0.3s ease, box-shadow 0.3s ease;
+      opacity: 0;
+      animation: fadeIn 0.5s forwards;
+      display: block; /* Ensure it's visible when src is set */
+    }
+    .preview-img:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    /* Required field highlight */
+    input.required:invalid {
+      border: 2px solid red;
+    }
+    /* Drop zone styles */
+    .drop-zone {
+      border: 2px dashed #007bff;
+      border-radius: 8px;
+      padding: 10px; /* Reduced padding to save space */
+      text-align: center;
+      cursor: pointer;
+      transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+      margin-bottom: 5px; /* Reduced margin */
+      min-height: 80px; /* Smaller height */
+    }
+    .drop-zone:hover {
+      background-color: #f0f8ff;
+      border-color: #0056b3;
+      transform: scale(1.02);
+    }
+    .drop-zone.dragover {
+      background-color: #e0f7fa;
+      border-color: #00acc1;
+      animation: pulse 1s infinite;
+    }
+    .drop-zone i {
+      font-size: 1.5em; /* Smaller icon */
+      color: #007bff;
+    }
+    .drop-zone span {
+      display: block;
+      margin-top: 5px; /* Reduced margin */
+      font-size: 14px; /* Smaller text */
+      color: #555;
+    }
+    .upload-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Smaller min width */
+      gap: 15px; /* Reduced gap */
+    }
+    .upload-item {
+      text-align: center;
+      position: relative; /* For potential overlay */
+    }
+    /* New layout for selects and uploads */
+    .top-section {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .selects-container {
+      flex: 1;
+    }
+    .uploads-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+    .uploads-container .upload-grid {
+      justify-content: flex-end;
+    }
+    .uploads-container h3 {
+      font-size: 16px; /* Smaller heading */
+      margin-bottom: 10px; /* Reduced margin */
+    }
+  </style>
+</head>
+<body>
+  <h2>PDF Filler Web App</h2>
+
+  <div class="top-section">
+    <div class="selects-container">
+      <label class="horizontal-form-group">
+        <span>Select PDF:</span>
+        <select id="pdfSelect"></select>
+      </label>
+
+      <label class="horizontal-form-group">
+        <span>Select TXT File from Pending:</span>
+        <select id="txtSelect">
+          <option value="">-- Select TXT File --</option>
+        </select>
+      </label>
+    </div>
+
+    <div class="uploads-container">
+      <h3>Photo and Signature Uploads</h3>
+      <div class="upload-grid">
+        <div class="upload-item">
+          <div class="drop-zone" id="photoDropZone">
+            <i class="fas fa-camera"></i>
+            <span>Drop Photo or Click</span>
+          </div>
+          <img id="photoPreview" class="preview-img" src="" alt="Photo Preview" style="display: none;">
+        </div>
+        <div class="upload-item">
+          <div class="drop-zone" id="signatureDropZone">
+            <i class="fas fa-signature"></i>
+            <span>Drop Signature or Click</span>
+          </div>
+          <img id="signaturePreview" class="preview-img" src="" alt="Signature Preview" style="display: none;">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="photoInput" accept="image/*" style="display: none;">
+  <input type="file" id="signatureInput" accept="image/*" style="display: none;">
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <div id="memberFormContainer" class="form-section" style="display: none;"></div>
+  <button id="nextBtn" style="display: none;">Next</button>
+
+  <div id="accountsContainer" class="form-section" style="display: none;"></div>
+  <button id="updateBtn" style="display: none;">Update TXT and Proceed</button>
+
+  
+  <label class="checkbox-label">
+    <input type="checkbox" id="textOnly"> Download text-only filled PDF (no photo, signature, stamps)
+  </label>
+
+  <button id="generatePdfBtn" style="display: none;" onclick="fillPdf()">Download Filled PDF</button>
+
+  <canvas id="pdfCanvas"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  
+  <script>
+
+let parsedForms = [];
+let memberInfo = {};
+let accountInfos = [];
+let schemeMapping = {};
+let selectedTxtFile = '';
+let coordinates = {};
+let field_mapping = {};
+let charSpacedFields = [];
+let photo_signature = {};
+
+async function loadSchemeMapping() {
+  showLoading(true);
+  try {
+    const response = await fetch('/Refrence/Refrence.txt');
+    const content = await response.text();
+    const lines = content.split('\n').filter(l => l.trim());
+    lines.forEach(line => {
+      if (line.includes(':')) {
+        const [key, value] = line.split(':').map(s => s.trim());
+        schemeMapping[key] = value;
+      }
+    });
+    console.log('Scheme mapping loaded:', schemeMapping);
+  } catch (err) {
+    console.error('Failed to load scheme mapping:', err);
+    alert('Failed to load scheme reference file. Please check /Refrence/Refrence.txt');
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadCoordinatesForPDF(pdfName) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = `Coordinates/${pdfName}.js?cacheBust=${Date.now()}`;
+    script.onload = () => {
+      if (window.dynamicCoordinates) {
+        coordinates = window.dynamicCoordinates.coordinates;
+        field_mapping = window.dynamicCoordinates.field_mapping;
+        charSpacedFields = window.dynamicCoordinates.charSpacedFields;
+        photo_signature = window.dynamicCoordinates.photo_signature;
+        window.dynamicCoordinates = null; // clear after use
+        resolve();
+      } else {
+        reject(new Error("No coordinates found in JS file"));
+      }
+    };
+    script.onerror = () => reject(new Error(`Failed to load coordinates for ${pdfName}`));
+    document.body.appendChild(script);
+  });
+}
+
+function parseDataFile(content) {
+  const blocks = content.split(/-{5,}/g).map(b => b.trim()).filter(b => b.length);
+
+  memberInfo = {};
+  accountInfos = [];
+
+  blocks.forEach(block => {
+    if (block.startsWith("=== MEMBER INFO ===")) {
+      memberInfo = parseKeyValueBlock(block);
+    } else if (block.startsWith("=== ACCOUNT INFO")) {
+      const accountInfo = parseKeyValueBlock(block);
+      accountInfos.push(accountInfo);
+    }
+  });
+
+  // Combine for PDF filling (as before)
+  parsedForms = accountInfos.map(account => ({ ...memberInfo, ...account }));
+
+  return parsedForms;
+}
+
+function parseKeyValueBlock(block) {
+  const lines = block.split("\n");
+  const data = {};
+  lines.forEach(line => {
+    if (!line.includes(":")) return;
+    const [key, ...rest] = line.split(":");
+    data[key.trim()] = rest.join(":").trim();
+  });
+  return data;
+}
+
+async function loadTxtFilesList() {
+  showLoading(true);
+  try {
+    const response = await fetch('/api/txt-list'); // Assuming server endpoint for listing TXT files in public/Pending
+    const txtFiles = await response.json();
+    const select = document.getElementById('txtSelect');
+    txtFiles.forEach(txt => {
+      const option = document.createElement('option');
+      option.value = txt;
+      option.textContent = txt;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    alert('Failed to load TXT list from Pending folder');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+}
+
+function displayMemberDetails() {
+  const container = document.getElementById('memberFormContainer');
+  container.innerHTML = '<h3>Member Details (Editable)</h3>';
+  container.style.display = 'block';
+
+  // Section 1: Member Information
+  const memberFields = ['fullName', 'guardianName', 'dateOfBirth', 'AGE'];
+  createSection(container, 'Member Information', memberFields, false);
+
+  // Section 2: Contact
+  const contactFields = ['address', 'houseNo', 'Village', 'street', 'post', 'district', 'pincode', 'mobileNo'];
+  createSection(container, 'Contact Details', contactFields, true); // true for contact section
+
+  // Section 3: Documents
+  const documentFields = ['panCard'];
+  createSection(container, 'Documents', documentFields, false);
+
+  // Section 4: Centre Info
+  const centreFields = ['centreCode', 'centreName', 'region'];
+  createSection(container, 'Centre Information', centreFields, true);
+
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function createSection(container, title, fields, isContact = false) {
+  const section = document.createElement('div');
+  section.className = 'section-block';
+  if (isContact) {
+    section.classList.add('contact-section');
+  }
+
+  const heading = document.createElement('h4');
+  heading.textContent = title;
+  section.appendChild(heading);
+
+  const grid = document.createElement('div');
+  grid.className = 'grid-2';
+
+  fields.forEach(key => {
+    if (memberInfo.hasOwnProperty(key)) {
+      const div = document.createElement('div');
+      div.className = 'form-group';
+
+      const label = document.createElement('label');
+      label.textContent = `${key.charAt(0).toUpperCase() + key.slice(1)}:`; // Capitalize labels for professional look
+
+      let input;
+      if (key === 'address' && isContact) {
+        input = document.createElement('textarea'); // Use textarea for main address to allow multi-line
+      } else {
+        input = document.createElement('input');
+        input.type = 'text';
+      }
+      input.value = memberInfo[key] || '';
+      input.dataset.key = key;
+      input.placeholder = `Enter ${key.charAt(0).toUpperCase() + key.slice(1)}`; // Improved placeholders
+
+      if (key === 'address' && isContact) {
+        div.classList.add('full-width');
+      }
+
+      div.appendChild(label);
+      div.appendChild(input);
+      grid.appendChild(div);
+    }
+  });
+
+  section.appendChild(grid);
+  container.appendChild(section);
+}
+
+function displayAccounts() {
+  const container = document.getElementById('accountsContainer');
+  container.innerHTML = '<h3>Account Information (Editable - Excel-like Table)</h3>';
+  container.style.display = 'block';
+
+  const table = document.createElement('table');
+  const thead = document.createElement('thead');
+  const tbody = document.createElement('tbody');
+
+  // Define account keys
+  const accountKeys = ['accountNo', 'certificateNo', 'receiptNo', 'applicationNo', 'denomination', 'accountOpeningDate', 'nomineeName', 'nomineeRelation', 'nomineeAge'];
+
+  // Create header row
+  const trHead = document.createElement('tr');
+  accountKeys.forEach(key => {
+    const th = document.createElement('th');
+    th.textContent = key.charAt(0).toUpperCase() + key.slice(1);
+    trHead.appendChild(th);
+  });
+  thead.appendChild(trHead);
+
+  // Create rows for each account
+  accountInfos.forEach((account, index) => {
+    const tr = document.createElement('tr');
+    accountKeys.forEach(key => {
+      const td = document.createElement('td');
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = account[key] || '';
+      input.dataset.key = key;
+      input.dataset.accountIndex = index;
+      if (key === 'certificateNo') {
+        input.required = true; // Mark as required
+        input.classList.add('required');
+        if (!account[key] || account[key] === '0') {
+          input.style.border = '2px solid red'; // Highlight required
+        }
+      }
+      input.addEventListener('input', () => {
+        if (key === 'certificateNo' && input.value && input.value !== '0') {
+          input.style.border = '1px solid #ccc';
+        } else if (key === 'certificateNo') {
+          input.style.border = '2px solid red';
+        }
+      });
+      td.appendChild(input);
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(thead);
+  table.appendChild(tbody);
+  container.appendChild(table);
+
+  document.getElementById('updateBtn').style.display = 'block';
+}
+
+async function updateTxtFile() {
+  // Collect updated member info
+  const memberInputs = document.querySelectorAll('#memberFormContainer input, #memberFormContainer textarea');
+  memberInputs.forEach(input => {
+    memberInfo[input.dataset.key] = input.value.trim();
+  });
+
+  // Collect updated account infos
+  const rows = document.querySelectorAll('#accountsContainer table tbody tr');
+  rows.forEach((row, index) => {
+    const inputs = row.querySelectorAll('input');
+    inputs.forEach(input => {
+      const key = input.dataset.key;
+      accountInfos[index][key] = input.value.trim();
+    });
+  });
+
+  // Validate certificateNo for all accounts
+  let valid = true;
+  accountInfos.forEach(account => {
+    if (!account.certificateNo || account.certificateNo === '0') {
+      valid = false;
+    }
+  });
+  if (!valid) {
+    alert('Please fill all certificateNo fields that are empty or 0.');
+    return;
+  }
+
+  // Reconstruct TXT content
+  let txtContent = '=== MEMBER INFO ===\n';
+  for (let key in memberInfo) {
+    txtContent += `${key}: ${memberInfo[key]}\n`;
+  }
+  txtContent += '---------------------\n\n';
+
+  accountInfos.forEach(account => {
+    txtContent += '=== ACCOUNT INFO ===\n'; // Adjust if form-specific
+    for (let key in account) {
+      txtContent += `${key}: ${account[key]}\n`;
+    }
+    txtContent += '---------------------\n\n';
+  });
+
+  showLoading(true);
+  try {
+    const response = await fetch('/api/save-txt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename: selectedTxtFile, content: txtContent })
+    });
+    if (response.ok) {
+      alert('TXT file updated successfully!');
+      // Re-parse for PDF filling
+      parseDataFile(txtContent);
+      // Show generate button
+      document.getElementById('generatePdfBtn').style.display = 'block';
+    } else {
+      alert('Failed to update TXT file.');
+    }
+  } catch (err) {
+    alert('Error saving TXT file.');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+}
+
+async function loadImageBytes(file) {
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = () => resolve(new Uint8Array(reader.result));
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function showLoading(show) {
+  document.getElementById('loading').style.display = show ? 'block' : 'none';
+}
+
+function handleFileUpload(event, dropZoneId, previewId, inputId) {
+  event.preventDefault();
+  let file;
+  if (event.type === 'drop') {
+    file = event.dataTransfer.files[0];
+  } else {
+    file = document.getElementById(inputId).files[0];
+  }
+  if (file && file.type.startsWith('image/')) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dropZone = document.getElementById(dropZoneId);
+      const preview = document.getElementById(previewId);
+      preview.src = e.target.result;
+      dropZone.style.display = 'none'; // Hide drop zone after upload
+      preview.style.display = 'block'; // Show preview
+    };
+    reader.readAsDataURL(file);
+    document.getElementById(inputId).files = new FileList([file]); // Update hidden input
+  } else {
+    alert('Please upload a valid image file.');
+  }
+}
+
+function setupDropZone(dropZoneId, inputId, previewId) {
+  const dropZone = document.getElementById(dropZoneId);
+  const input = document.getElementById(inputId);
+
+  dropZone.addEventListener('click', () => input.click());
+  input.addEventListener('change', (e) => handleFileUpload(e, dropZoneId, previewId, inputId));
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+
+  dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('dragover');
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    handleFileUpload(e, dropZoneId, previewId, inputId);
+  });
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const pdfSelect = document.getElementById("pdfSelect");
+  showLoading(true);
+  try {
+    const response = await fetch("/api/pdf-list");
+    const pdfs = await response.json();
+    pdfs.forEach(pdf => {
+      const option = document.createElement("option");
+      option.value = pdf;
+      option.textContent = pdf;
+      pdfSelect.appendChild(option);
+    });
+  } catch (err) {
+    alert("Failed to load PDF list");
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+
+  await loadSchemeMapping();
+  await loadTxtFilesList();
+
+  setupDropZone('photoDropZone', 'photoInput', 'photoPreview');
+  setupDropZone('signatureDropZone', 'signatureInput', 'signaturePreview');
+});
+
+document.getElementById("pdfSelect").addEventListener("change", async function() {
+  const pdfName = this.value.replace(/\.pdf$/i, "");
+  showLoading(true);
+  try {
+    await loadCoordinatesForPDF(pdfName);
+    console.log("Coordinates loaded for", pdfName);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    showLoading(false);
+  }
+});
+
+document.getElementById("txtSelect").addEventListener("change", async function() {
+  selectedTxtFile = this.value;
+  if (!selectedTxtFile) return;
+
+  showLoading(true);
+  try {
+    const response = await fetch(`public/Pending/${selectedTxtFile}`);
+    const content = await response.text();
+    parseDataFile(content);
+    displayMemberDetails();
+    document.getElementById('accountsContainer').style.display = 'none';
+    document.getElementById('updateBtn').style.display = 'none';
+    document.getElementById('generatePdfBtn').style.display = 'none';
+  } catch (err) {
+    alert('Failed to load TXT file content');
+    console.error(err);
+  } finally {
+    showLoading(false);
+  }
+});
+
+document.getElementById("nextBtn").addEventListener("click", function() {
+  // Update memberInfo from inputs
+  const inputs = document.querySelectorAll('#memberFormContainer input, #memberFormContainer textarea');
+  inputs.forEach(input => {
+    memberInfo[input.dataset.key] = input.value.trim();
+  });
+
+  // Proceed to accounts
+  document.getElementById('memberFormContainer').style.display = 'none';
+  document.getElementById('nextBtn').style.display = 'none';
+  displayAccounts();
+});
+
+document.getElementById("updateBtn").addEventListener("click", updateTxtFile);
+
+async function fillPdf() {
+  const photoFile = document.getElementById('photoInput').files[0];
+  const signatureFile = document.getElementById('signatureInput').files[0];
+  const textOnly = document.getElementById('textOnly').checked;
+
+  if (parsedForms.length === 0) {
+    alert("No data loaded. Please select and process a TXT file first.");
+    return;
+  }
+
+  if (Object.keys(schemeMapping).length === 0) {
+    alert("Scheme mapping not loaded. Please refresh and try again.");
+    return;
+  }
+
+  if (!textOnly && photoFile && signatureFile) {
+    // Proceed with images
+  } else if (!textOnly) {
+    const confirmSkip = confirm("Photo or signature missing. Proceed with text-only?");
+    if (!confirmSkip) return;
+    textOnly = true;
+  }
+
+  let photoBytes, signatureBytes;
+  if (!textOnly && photoFile && signatureFile) {
+    showLoading(true);
+    try {
+      [photoBytes, signatureBytes] = await Promise.all([
+        loadImageBytes(photoFile),
+        loadImageBytes(signatureFile)
+      ]);
+    } finally {
+      showLoading(false);
+    }
+  }
+
+  for (let i = 0; i < parsedForms.length; i++) {
+    const formData = parsedForms[i];
+    const schemeCode = formData.schemeName;
+
+    if (!schemeCode) {
+      alert(`No schemeName found for form ${i + 1}. Skipping.`);
+      continue;
+    }
+
+    const pdfName = schemeMapping[schemeCode];
+    if (!pdfName) {
+      alert(`No PDF mapping found for scheme code ${schemeCode} in form ${i + 1}. Skipping.`);
+      continue;
+    }
+
+    const pdfUrl = `Pdf/${encodeURIComponent(pdfName)}`;
+    let basePdfBytes;
+    showLoading(true);
+    try {
+      basePdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+    } catch (err) {
+      alert(`Failed to fetch PDF ${pdfName} for form ${i + 1}. Skipping.`);
+      continue;
+    } finally {
+      showLoading(false);
+    }
+
+    const pdfBaseName = pdfName.replace(/\.pdf$/i, "");
+    showLoading(true);
+    try {
+      await loadCoordinatesForPDF(pdfBaseName);
+    } catch (err) {
+      alert(`Failed to load coordinates for ${pdfName} in form ${i + 1}. Skipping.`);
+      continue;
+    } finally {
+      showLoading(false);
+    }
+
+    const pdfDoc = await PDFLib.PDFDocument.load(basePdfBytes);
+    const pages = pdfDoc.getPages();
+
+    let photoImg, signatureImg;
+    if (!textOnly && photoBytes && signatureBytes) {
+      try {
+        photoImg = await pdfDoc.embedJpg(photoBytes);
+      } catch {
+        photoImg = await pdfDoc.embedPng(photoBytes);
+      }
+
+      try {
+        signatureImg = await pdfDoc.embedPng(signatureBytes);
+      } catch {
+        signatureImg = await pdfDoc.embedJpg(signatureBytes);
+      }
+    }
+
+    for (let pageIndex in coordinates) {
+      const page = pages[pageIndex];
+      for (let key in coordinates[pageIndex]) {
+        const coordInfo = coordinates[pageIndex][key];
+        const fieldKey = field_mapping[key];
+        const text = formData[fieldKey] || "";
+
+        coordInfo.coords.forEach(pos => {
+          const isSpaced = charSpacedFields.includes(key);
+
+          if (isSpaced) {
+            let x = pos.pos[0];
+            for (let char of text) {
+              page.drawText(char, {
+                x: x,
+                y: pos.pos[1],
+                size: pos.font_size || 12,
+                color: PDFLib.rgb(0, 0, 0)
+              });
+              x += pos.char_spacing || 10;
+            }
+          } else {
+            page.drawText(text, {
+              x: pos.pos[0],
+              y: pos.pos[1],
+              size: pos.font_size || 12,
+              color: PDFLib.rgb(0, 0, 0)
+            });
+          }
+        });
+      }
+    }
+
+    if (!textOnly && photoImg && signatureImg) {
+      if (photo_signature.photo?.[0]) {
+        const photoPos = photo_signature.photo[0];
+        pages[0].drawImage(photoImg, {
+          x: photoPos.x,
+          y: photoPos.y,
+          width: 86.4,
+          height: 108
+        });
+      }
+
+      for (let pageIndex in photo_signature.signature) {
+        photo_signature.signature[pageIndex].forEach(sig => {
+          pages[pageIndex].drawImage(signatureImg, {
+            x: sig.x,
+            y: sig.y,
+            width: 170.275,
+            height: 32.02
+          });
+        });
+      }
+
+      for (let pageIndex in photo_signature.stamps) {
+        for (let stamp of photo_signature.stamps[pageIndex]) {
+          const url = `Stamps/${stamp.file}`;
+          const stampBytes = await fetch(url).then(res => res.arrayBuffer());
+          const stampImg = await pdfDoc.embedPng(stampBytes);
+          pages[pageIndex].drawImage(stampImg, {
+            x: stamp.x,
+            y: stamp.y,
+            width: stamp.width,
+            height: stamp.height
+          });
+        }
+      }
+    }
+
+    const finalPdfBytes = await pdfDoc.save();
+    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+
+    const downloadLink = document.createElement('a');
+    const accountNo = formData.accountNo || `form_${i + 1}`;
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `A${accountNo}.pdf`;
+    downloadLink.click();
+
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  alert("All forms have been downloaded!");
+}
+
+</script>
+</body>
+</html>

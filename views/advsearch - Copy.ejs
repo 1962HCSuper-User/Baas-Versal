@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced Account Search</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #74ebd5 0%, #ACB6E5 100%);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 28px;
+      color: #fff;
+      margin-bottom: 20px;
+      animation: fadeInDown 1s ease-in-out;
+    }
+
+    form {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+      animation: fadeInUp 1s ease-in-out;
+    }
+
+    .field-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .field-group input {
+      flex: 1 1 220px;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      transition: all 0.3s ease;
+    }
+
+    .field-group input:focus {
+      border-color: #74ebd5;
+      box-shadow: 0 0 6px rgba(116, 235, 213, 0.8);
+      outline: none;
+      transform: scale(1.02);
+    }
+
+    button,
+    .download-btn {
+      display: inline-block;
+      margin: 20px auto 0;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 30px;
+      background: linear-gradient(90deg, #36d1dc, #5b86e5);
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    button:hover,
+    .download-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Table styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    th {
+      background: #5b86e5;
+      color: #fff;
+      padding: 12px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+
+    tr:hover td {
+      background: #f9f9ff;
+      transition: background 0.3s ease;
+    }
+
+    p {
+      text-align: center;
+      color: #fff;
+      font-size: 18px;
+      margin-top: 20px;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <h2> SAHARA CREDIT COOPERATIVE SOCIETY LIMITED </h2>
+
+  <!-- Search Form -->
+  <form action="/advsearch" method="POST">
+    <div class="field-group">
+      <input type="text" name="MMBRNO" placeholder="Member No">
+      <input type="text" name="ACCNUMBER" placeholder="Account Number">
+      <input type="text" name="APPLNUMBER" placeholder="Application No">
+      <input type="text" name="PASSBOOKNO" placeholder="Passbook No">
+      <input type="text" name="RECEIPTNO" placeholder="Receipt No">
+      <input type="date" name="ACCOPENDT" placeholder="Acc Open DT (Ref)">
+      <input type="text" name="ACCOUNTNAME" placeholder="Account Name">
+      <input type="text" name="DEPOSTMODE" placeholder="Deposit Mode">
+      <input type="date" name="MATURDATE" placeholder="Maturity Date">
+      <input type="text" name="INTROCODE" placeholder="Introducer Code">
+      <input type="text" name="DENOMINATION" placeholder="Denomination">
+      <input type="text" name="BRANCHCODE" placeholder="Branch Code">
+      <input type="text" name="SCHECODE" placeholder="Scheme Code">
+
+    </div>
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- Results Table -->
+  <% if (data && data.length> 0) { %>
+    <table>
+      <thead>
+        <tr>
+          <th>MMBRNO</th>
+          <th>ACCNUMBER</th>
+          <th>APPLNUMBER</th>
+          <th>BRANCHCODE</th>
+          <th>SCHECODE</th>
+          <th>SCVTYPE</th>
+          <th>ACCOUNTNAME</th>
+          <th>ACCOPENDATE</th>
+          <th>MATURDATE</th>
+          <th>INTROCODE</th>
+          <th>PASSBOOKNO</th>
+          <th>RECEIPTNO</th>
+          <th>DENOMINATION</th>
+          <th>DEPOSTMODE</th>
+          <th>INTPMODE</th>
+          <th>DAYSOFDEP</th>
+          <th>LAPIRFLAG</th>
+          <th>JOINTFLAG</th>
+          <th>AGNSCOLL</th>
+          <th>ALPHAFLAG</th>
+          <th>SIGFLAG</th>
+          <th>LOANFLAG</th>
+          <th>STFLAG</th>
+          <th>SPCPAID</th>
+          <th>INTRO_TYPE</th>
+          <th>TITLE</th>
+          <th>EFFECTIVE_DATE</th>
+          <th>ISPHOTOYN</th>
+          <th>TITLE</th>
+          <th>FNAME</th>
+          <th>MNAME</th>
+          <th>SNAME</th>
+          <th>DOB</th>
+          <th>SEX</th>
+          <th>PERMNT_ADD</th>
+          <th>PERMNT_CITY</th>
+          <th>PERMNT_STATE</th>
+          <th>PERMNT_PIN</th>
+          <th>PERMNT_CONTACT</th>
+          <th>PRSNT_ADD</th>
+          <th>PRSNT_CITY</th>
+          <th>PRSNT_STATE</th>
+          <th>PRSNT_PIN</th>
+          <th>PRSNT_CONTACT</th>
+          <th>OCCUPATION</th>
+          <th>AGE</th>
+          <th>RELIGION</th>
+          <th>CASTE</th>
+          <th>PAN</th>
+          <th>BGROUP</th>
+          <th>COUNTRY</th>
+          <th>MSTATUS</th>
+          <th>DOM</th>
+          <th>CHILDS</th>
+          <th>EDUCATION</th>
+          <th>MBRTYPE</th>
+          <th>CUSTTYPE</th>
+          <th>RSDADDRESS</th>
+          <th>RSDCONTACT</th>
+          <th>OFFADDRESS</th>
+          <th>OFFCONTACT</th>
+          <th>HQFLAG</th>
+
+        </tr>
+      </thead>
+      <tbody>
+        <% data.forEach(row=> { %>
+          <tr>
+            <td>
+              <%= row.MMBRNO %>
+            </td>
+            <td>
+              <%= row.ACCNUMBER %>
+            </td>
+            <td>
+              <%= row.APPLNUMBER %>
+            </td>
+            <td>
+              <%= row.BRANCHCODE %>
+            </td>
+            <td>
+              <%= row.SCHECODE %>
+            </td>
+            <td>
+              <%= row.SCVTYPE %>
+            </td>
+            <td>
+              <%= row.ACCOUNTNAME %>
+            </td>
+            <td>
+              <%= row.ACCOPENDATE %>
+            </td>
+            <td>
+              <%= row.MATURDATE %>
+            </td>
+            <td>
+              <%= row.INTROCODE %>
+            </td>
+            <td>
+              <%= row.PASSBOOKNO %>
+            </td>
+            <td>
+              <%= row.RECEIPTNO %>
+            </td>
+            <td>
+              <%= row.DENOMINATION %>
+            </td>
+            <td>
+              <%= row.DEPOSTMODE %>
+            </td>
+            <td>
+              <%= row.INTPMODE %>
+            </td>
+            <td>
+              <%= row.DAYSOFDEP %>
+            </td>
+            <td>
+              <%= row.LAPIRFLAG %>
+            </td>
+            <td>
+              <%= row.JOINTFLAG %>
+            </td>
+            <td>
+              <%= row.AGNSCOLL %>
+            </td>
+            <td>
+              <%= row.ALPHAFLAG %>
+            </td>
+            <td>
+              <%= row.SIGFLAG %>
+            </td>
+            <td>
+              <%= row.LOANFLAG %>
+            </td>
+            <td>
+              <%= row.STFLAG %>
+            </td>
+            <td>
+              <%= row.SPCPAID %>
+            </td>
+            <td>
+              <%= row.INTRO_TYPE %>
+            </td>
+            <td>
+              <%= row.TITLE %>
+            </td>
+            <td>
+              <%= row.EFFECTIVE_DATE %>
+            </td>
+            <td>
+              <%= row.ISPHOTOYN %>
+            </td>
+            <td>
+              <%= row.TITLE %>
+            </td>
+            <td>
+              <%= row.FNAME %>
+            </td>
+            <td>
+              <%= row.MNAME %>
+            </td>
+            <td>
+              <%= row.SNAME %>
+            </td>
+            <td>
+              <%= row.DOB %>
+            </td>
+            <td>
+              <%= row.SEX %>
+            </td>
+            <td>
+              <%= row.PERMNT_ADD %>
+            </td>
+            <td>
+              <%= row.PERMNT_CITY %>
+            </td>
+            <td>
+              <%= row.PERMNT_STATE %>
+            </td>
+            <td>
+              <%= row.PERMNT_PIN %>
+            </td>
+            <td>
+              <%= row.PERMNT_CONTACT %>
+            </td>
+            <td>
+              <%= row.PRSNT_ADD %>
+            </td>
+            <td>
+              <%= row.PRSNT_CITY %>
+            </td>
+            <td>
+              <%= row.PRSNT_STATE %>
+            </td>
+            <td>
+              <%= row.PRSNT_PIN %>
+            </td>
+            <td>
+              <%= row.PRSNT_CONTACT %>
+            </td>
+            <td>
+              <%= row.OCCUPATION %>
+            </td>
+            <td>
+              <%= row.AGE %>
+            </td>
+            <td>
+              <%= row.RELIGION %>
+            </td>
+            <td>
+              <%= row.CASTE %>
+            </td>
+            <td>
+              <%= row.PAN %>
+            </td>
+            <td>
+              <%= row.BGROUP %>
+            </td>
+            <td>
+              <%= row.COUNTRY %>
+            </td>
+            <td>
+              <%= row.MSTATUS %>
+            </td>
+            <td>
+              <%= row.DOM %>
+            </td>
+            <td>
+              <%= row.CHILDS %>
+            </td>
+            <td>
+              <%= row.EDUCATION %>
+            </td>
+            <td>
+              <%= row.MBRTYPE %>
+            </td>
+            <td>
+              <%= row.CUSTTYPE %>
+            </td>
+            <td>
+              <%= row.RSDADDRESS %>
+            </td>
+            <td>
+              <%= row.RSDCONTACT %>
+            </td>
+            <td>
+              <%= row.OFFADDRESS %>
+            </td>
+            <td>
+              <%= row.OFFCONTACT %>
+            </td>
+            <td>
+              <%= row.HQFLAG %>
+            </td>
+
+          </tr>
+          <% }) %>
+      </tbody>
+    </table>
+
+    Download button
+    <!-- <% if (downloadFile) { %>
+      <div style="text-align:center;">
+        <a href="/downloads/<%= downloadFile %>"  class="download-btn" download>
+           Verify The User  <%= data[0].MMBRNO %>
+        </a>
+      </div>
+      <% } %> -->
+<!-- Verify button -->
+<!-- <div style="text-align:center;">
+  <form action="/Verify" method="GET">
+    <button type="submit" class="download-btn">
+      ✅ Verify The User <%= data[0].MMBRNO %>
+    </button>
+  </form>
+</div> -->
+
+<% if (data && data.length > 0) { %>
+  <% const uniqueMembers = [...new Set(data.map(item => item.MMBRNO))]; %>
+  <% uniqueMembers.forEach(mmbrno => { %>
+    <div style="text-align:center;">
+      <button class="download-btn" onclick="handleDownload('<%= mmbrno %>')">
+        ✅ Verify The User <%= mmbrno %>
+      </button>
+    </div>
+  <% }); %>
+<% } %>
+
+<script>
+function handleDownload(mmbrno) {
+  // Trigger file download using hidden iframe
+  const iframe = document.createElement("iframe");
+  iframe.style.display = "none";
+  iframe.src = "/verifyUser/" + mmbrno;
+  document.body.appendChild(iframe);
+
+  // After small delay (to ensure download starts), redirect to /Verify
+  setTimeout(() => {
+    window.location.href = "/Verify";
+  }, 2000); // 2 seconds delay (adjust if needed)
+}
+</script>
+
+
+
+        <% } else if (data) { %>
+          <p>⚠️ No records found.</p>
+          <% } %>
+</body>
+
+</html>

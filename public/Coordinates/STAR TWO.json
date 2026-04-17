@@ -1,0 +1,102 @@
+{
+  "STAR TWO": {
+    "pdf_file": "STAR TWO.pdf",
+    "coordinates": {
+      "0": {
+        "Authorised centre code": {"coords": [[125.37, 671.37]], "char_spacing": 0, "font_size": 13},
+        "Authorised centre name": {"coords": [[261.73, 671.37], [172.48, 142.00]], "char_spacing": 0, "font_size": 13},
+        "Region": {"coords": [[389.66, 671.37]], "char_spacing": 0, "font_size": 13},
+        "Membership no": {"coords": [[111.49, 640.13]], "char_spacing": 19, "font_size": 16},
+        "Full_Name": {"coords": [[172.48, 483.92]], "char_spacing": 0, "font_size": 14},
+        "Address": {"coords": [[106.29, 423.68]], "char_spacing": 0, "font_size": 14},
+        "Father/Husband name": {"coords": [[165.04, 454.17]], "char_spacing": 0, "font_size": 14},
+        "Date of birth": {"coords": [[120.42, 388.95]], "char_spacing": 21, "font_size": 15},
+        "AGE": {"coords": [[308.59, 390.43]], "char_spacing": 0, "font_size": 11},
+        "Pan card": {"coords": [[133.81, 326.24]], "char_spacing": 21, "font_size": 15},
+        "Mobile no": {"coords": [[98.85, 276.63]], "char_spacing": 0, "font_size": 14},
+        "Amount": {"coords": [[65.38, 224.33]], "char_spacing": 0, "font_size": 14},
+        "Amount in word": {"coords": [[229.72, 224.33]], "char_spacing": 0, "font_size": 10},
+        "Account no": {"coords": [[340.57, 593.57]], "char_spacing": 0, "font_size": 14},
+        "Occupation": {
+          "coords": [],
+          "char_spacing": 0,
+          "font_size": 10,
+          "checkmarks": {
+            "Business": {"coords": [[269.17, 359.94]], "char_spacing": 0, "font_size": 14},
+            "Farmer": {"coords": [[326.44, 359.19]], "char_spacing": 0, "font_size": 14},
+            "Service": {"coords": [[144.96, 358.45]], "char_spacing": 0, "font_size": 14},
+            "Other": {"coords": [[382.44, 359.19]], "char_spacing": 0, "font_size": 14}
+          }
+        },
+        "Sex": {
+          "coords": [],
+          "char_spacing": 0,
+          "font_size": 0,
+          "checkmarks": {
+            "Male": {"coords": [[429.89, 391.99]], "char_spacing": 21, "font_size": 12},
+            "Female": {"coords": [[486.34, 389.69]], "char_spacing": 21, "font_size": 12}
+          }
+        },
+        "CASH/CHEQUE": {
+          "coords": [[40.84, 300.44]],
+          "char_spacing": 0,
+          "font_size": 0,
+          "checkmarks": {
+            "CASH": {"coords": [[171.48, 166.06]], "char_spacing": 0, "font_size": 14},
+            "CHEQUE": {"coords": [[360.48, 165.80]], "char_spacing": 0, "font_size": 14}
+          }
+        },
+        "Form 60/61": {"coords": [[464.03, 327.95]], "char_spacing": 0, "font_size": 12},
+        "Application no": {"coords": [[410.48, 778.50]], "char_spacing": 0, "font_size": 14},
+        "Account opening date": {"coords": [[427.01, 142.00]], "char_spacing": 12, "font_size": 13}
+      },
+      "1": {
+        "Manager code": {"coords": [[400.81, 452.17], [31.17, 29.20]], "char_spacing": 0, "font_size": 13},
+        "Manager name": {"coords": [[403.04, 423.16], [37.12, 52.00]], "char_spacing": 0, "font_size": 13},
+        "Membership no": {"coords": [[400.81, 366.63]], "char_spacing": 0, "font_size": 14},
+        "Receipt no": {"coords": [[87.69, 99.37]], "char_spacing": 0, "font_size": 11},
+        "Account opening date": {
+          "coords": [
+            {"pos": [315.29, 219.36], "char_spacing": 9.5, "font_size": 10},
+            {"pos": [390.62, 98.86], "char_spacing": 9.5, "font_size": 10}
+          ]
+        },
+        "Authorised centre name": {"coords": [[315.28, 209.69]], "char_spacing": 0, "font_size": 10}
+      }
+    },
+    "fields_by_page": {
+      "0": [
+        "Account no", "Membership no", "Application no", "Form 60/61", "Amount", "Amount in word",
+        "CASH/CHEQUE", "Sex", "Occupation", "Address", "Full_Name", "Date of birth", "AGE",
+        "Father/Husband name", "Mobile no", "Pan card", "Authorised centre code", "Region"
+      ],
+      "1": ["Receipt no", "Account opening date", "Manager name", "Manager code", "Authorised centre name"]
+    },
+    "profileImage": {
+      "file": "17535514288947170746811046137585.jpg",
+      "coords": { "x": 478, "y": 660, "width": 75, "height": 100 }
+    },
+    "signature": {
+      "files": [
+        { "file": "17535514732287925447188389355372.jpg", "page": 0, "x": 405, "y": 640, "width": 110, "height": 110 },
+        { "file": "17535514732287925447188389355372.jpg", "page": 0, "x": 425.31, "y": 25, "width": 110, "height": 110 },
+        { "file": "17535514732287925447188389355372.jpg", "page": 1, "x": 466.55, "y": 280.93, "width": 110, "height": 110 },
+        { "file": "17535514732287925447188389355372.jpg", "page": 1, "x": 464.32, "y": 184.56, "width": 110, "height": 110 }
+      ]
+    },
+    "stamps": {
+      "0": [
+        { "file": "Sarayan2D.png", "x": 420, "y": 725, "width": 100, "height": 100 },
+        { "file": "Sarayan2C.png", "x": 220, "y": 35, "width": 100, "height": 100 }
+      ],
+      "1": [
+        { "file": "Sarayan2C.png", "x": 220, "y": 25, "width": 100, "height": 100 },
+        { "file": "Msing.png", "x": 425.81, "y": 351.63, "width": 90, "height": 90 },
+        { "file": "Msin.png", "x": 430.81, "y": 391.63, "width": 75, "height": 75 },
+        { "file": "Msing.png", "x": 464.32, "y": 1, "width": 90, "height": 90 },
+        { "file": "Msin.png", "x": 464.32, "y": 30, "width": 90, "height": 90 }
+      ]
+    },
+    "required_fields": ["Account no", "Membership no", "Full_Name"]
+  }
+}

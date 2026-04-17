@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Filler</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input[type="file"], button { display: block; margin: 10px 0; }
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+  <h2>PDF Filler Web App</h2>
+  <label>Select PDF:</label>
+  <select id="pdfSelect"></select>
+
+    <input type="file" id="dataFileInput" accept=".txt,.data">
+
+
+  <label>Upload Photo:</label>
+  <input type="file" id="photoInput" accept="image/*">
+
+  <label>Upload Signature:</label>
+  <input type="file" id="signatureInput" accept="image/*">
+
+  <button onclick="fillPdf()">Download Filled PDF</button>
+
+  <canvas id="pdfCanvas"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script>
+
+      const coordinates = {
+      0: {
+        "Membership no": {"coords": [{pos: [23.50, 501.10], char_spacing: 18, font_size: 15}]},
+        "Account opening date": {
+          "coords": [
+            {pos: [23.50, 471.70], char_spacing: 18, font_size: 15},
+            {pos: [181.10, 30.30], char_spacing: 2, font_size: 8}
+          ]
+        },
+        "Date of birth": {
+          "coords": [
+            {pos: [65.50, 382.90], char_spacing: 18, font_size: 15}
+          ]
+        },
+        "Account no": {"coords": [{pos: [180.70, 473.50], char_spacing: 18, font_size: 15}]},
+        "Full_Name": {"coords": [{pos: [66.50, 413.50], char_spacing: 18, font_size: 15}]},
+        "AGE": {"coords": [{pos: [232.90, 383.50], char_spacing: 18, font_size: 15}]},
+        "Father/Husband name": {"coords": [{pos: [83.70, 360.10], char_spacing: 18, font_size: 15}]},
+        "Receipt no": {"coords": [{pos: [23.50, 443.50], char_spacing: 18, font_size: 15}]},
+        "Certificate no": {"coords": [{pos: [242.50, 444.70], char_spacing: 18, font_size: 15}]},
+        "House no": {"coords": [{pos: [57.70, 337.30], char_spacing: 18, font_size: 15}]},
+        "Street/Village": {"coords": [{pos: [207.70, 337.90], char_spacing: 18, font_size: 15}]},
+        "Post": {"coords": [{pos: [40.30, 315.70], char_spacing: 18, font_size: 15}]},
+        "District": {"coords": [{pos: [206.50, 317.50], char_spacing: 18, font_size: 15}]},
+        "State": {"coords": [{pos: [43.90, 295.30], char_spacing: 18, font_size: 15}]},
+        "Pincode": {"coords": [{pos: [351.10, 297.10], char_spacing: 18, font_size: 15}]},
+        "Mobile no": {"coords": [{pos: [97.90, 274.30], char_spacing: 18, font_size: 15}]},
+        "Nominee name": {"coords": [{pos: [64.30, 180.70], char_spacing: 18, font_size: 15}]},
+        "Nominee relation": {"coords": [{pos: [51.70, 157.90], char_spacing: 18, font_size: 15}]},
+        "Nominee age": {"coords": [{pos: [216.10, 159.70], char_spacing: 18, font_size: 15}]},
+        "Proportion": {"coords": [{pos: [290, 159.70], char_spacing: 18, font_size: 15}]},
+        "Pan card": {"coords": [{pos: [279.70, 80.50], char_spacing: 18, font_size: 15}]},
+        "Amount": {"coords": [{pos: [64.90, 48.70], char_spacing: 18, font_size: 15}]},
+        "Amount in word": {"coords": [{pos: [236.50, 48.90], char_spacing: 3, font_size: 13}]},
+        "Cash\\cheque": {"coords": [{pos: [103.90, 29.10], char_spacing: 2, font_size: 13}]},
+        "Application no": {"coords": [{pos: [320.50, 528.10], char_spacing: 2, font_size: 15}]},
+        "Denomination": {"coords": [{pos: [330.50, 505.10], char_spacing: 18, font_size: 15}]}
+      }
+    };
+
+    const field_mapping = {
+      "Account no": "accountNo",
+      "Membership no": "membershipNo",
+      "Full_Name": "fullName",
+      "Account opening date": "accountOpeningDate",
+      "Date of birth": "dateOfBirth",
+      "AGE": "age",
+      "Father/Husband name": "guardianName",
+      "Receipt no": "receiptNo",
+      "Certificate no": "certificateNo",
+      "House no": "houseNo",
+      "Street/Village": "street",
+      "Post": "post",
+      "District": "district",
+      "State": "state",
+      "Pincode": "pincode",
+      "Mobile no": "mobileNo",
+      "Nominee name": "nomineeName",
+      "Nominee relation": "nomineeRelation",
+      "Nominee age": "nomineeAge",
+      "Proportion": "proportion",
+      "Pan card": "panCard",
+      "Amount": "amount",
+      "Amount in word": "amountInWords",
+      "Cash\\cheque": "paymentMode",
+      "Application no": "applicationNo",
+      "Denomination": "denomination"
+    };
+
+    const sampleData = {
+      membershipNo: "789456",
+      accountNo: "61637200822",
+      fullName: "Arav Aujjha",
+      accountOpeningDate: "01/01/2022",
+      dateOfBirth: "01/01/2000",
+      age: "25",
+      guardianName: "Shjshs Aujjha",
+      receiptNo: "123456",
+      certificateNo: "987654",
+      houseNo: "123",
+      street: "Gandhi Nagar",
+      post: "Aligarh",
+      district: "Aligarh",
+      state: "Uttar Pradesh",
+      pincode: "202001",
+      mobileNo: "9876543210",
+      nomineeName: "Ravi Kumar",
+      nomineeRelation: "Brother",
+      nomineeAge: "22",
+      proportion: "100%",
+      panCard: "ABCDE1234F",
+      amount: "1000",
+      amountInWords: "One Thousand Only",
+      paymentMode: "Cash",
+      applicationNo: "APP789123",
+      denomination: "1000"
+    };
+
+    const photo_signature = {
+  photo: {
+    0: { x: 380, y: 545, width: 75, height: 100 }
+  },
+  signature: {
+    0: [
+      { x: 300.90, y: 550.70, width: 184.275, height: 34.02 },
+      { x: 270.50, y: 265, width: 184.275, height: 34.02 }
+    ],
+    1: [
+      { x: 355.17, y: 305, width: 184.275, height: 34.02 }
+    ]
+  },
+  stamps: {
+    0: [ // Page 0 (first page)
+      { file: "Sahara.png", x: 300, y: 550, width: 100, height: 100 },
+      { file: "Sahara.png", x: 190, y: 70, width: 100, height: 100 },
+      { file: "Msin.png", x: 358, y: 190, width: 90, height: 90 },
+      { file: "Msing.png", x: 365, y: 150, width: 100, height: 100 },
+    ],
+    1: [ // Page 1 (second page)
+      { file: "Sahara.png", x: 280, y: 300, width: 100, height: 100 },
+      { file: "Msing.png", x: 390, y: 2, width: 90, height: 90 },
+      { file: "Msin.png", x: 380, y: 35, width: 90, height: 90 },
+      { file: "Msin.png", x: 408, y: 180, width: 90, height: 90 },
+      { file: "Msing.png", x: 405, y: 150, width: 90, height: 90 },
+    ],
+  }
+};
+
+
+// data pase to by dynamic data file
+function parseDataFile(content) {
+  const formBlocks = content.split(/-{5,}/g); // split by ------
+  return formBlocks.map(block => {
+    const lines = block.split('\n').filter(line => line.includes(':'));
+    const data = {};
+    lines.forEach(line => {
+      const [key, ...rest] = line.split(':');
+      data[key.trim()] = rest.join(':').trim();
+    });
+    return data;
+  });
+}
+
+
+
+
+
+ // for geting list of pdf name 
+
+ window.addEventListener("DOMContentLoaded", async () => {
+  const select = document.getElementById("pdfSelect");
+  try {
+    const response = await fetch("/api/pdf-list");
+    const pdfs = await response.json();
+    pdfs.forEach(pdf => {
+      const option = document.createElement("option");
+      option.value = pdf;
+      option.textContent = pdf;
+      select.appendChild(option);
+    });
+  } catch (err) {
+    alert("Failed to load PDF list");
+    console.error(err);
+  }
+});
+
+
+
+
+
+  async function loadImageBytes(file) {
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = () => resolve(new Uint8Array(reader.result));
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function fillPdf() {
+const selectedPdf = document.getElementById('pdfSelect').value;
+if (!selectedPdf) return alert("Please select a PDF from the list");
+
+const pdfUrl = `Pdf/${encodeURIComponent(selectedPdf)}`;
+const pdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+const pages = pdfDoc.getPages();
+
+const photoFile = document.getElementById('photoInput').files[0];
+  const signatureFile = document.getElementById('signatureInput').files[0];
+
+  if (!pdfFile || !photoFile || !signatureFile) {
+    alert("Please upload all required files (PDF, Photo, Signature)");
+    return;
+  }
+
+  try {
+    const pdfBytes = await pdfFile.arrayBuffer();
+    const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+    const pages = pdfDoc.getPages();
+
+    // Load image bytes
+    const [photoBytes, signatureBytes] = await Promise.all([
+      loadImageBytes(photoFile),
+      loadImageBytes(signatureFile)
+    ]);
+
+    // Embed photo as JPG or PNG
+    let photoImg;
+    try {
+      photoImg = await pdfDoc.embedJpg(photoBytes);
+    } catch (e) {
+      try {
+        photoImg = await pdfDoc.embedPng(photoBytes);
+      } catch (err) {
+        throw new Error("Photo must be a valid JPG or PNG image.");
+      }
+    }
+
+    // Embed signature as JPG or PNG
+    let signatureImg;
+    try {
+      signatureImg = await pdfDoc.embedPng(signatureBytes);
+    } catch (e) {
+      try {
+        signatureImg = await pdfDoc.embedJpg(signatureBytes);
+      } catch (err) {
+        throw new Error("Signature must be a valid PNG or JPG image.");
+      }
+    }
+
+    // Fill text fields
+    // Fill text fields
+// Define fields that require one character per box (digit-by-digit spacing)
+const charSpacedFields = [
+  "Account no",
+  "Membership no",
+  "Full_Name",
+  "Account opening date",
+  "Date of birth",
+  "AGE",
+  "Father/Husband name",
+  "Receipt no",
+  "Certificate no",
+  "House no",
+  "Street/Village",
+  "Post",
+  "District",
+  "State",
+  "Pincode",
+  "Mobile no",
+  "Nominee name",
+  "Nominee relation",
+  "Nominee age",
+  "Proportion",
+  "Pan card",
+  "Amount",
+  "Denomination"
+];
+
+// Fill text fields
+for (let pageIndex in coordinates) {
+  const page = pages[pageIndex];
+  for (let key in coordinates[pageIndex]) {
+    const coordInfo = coordinates[pageIndex][key];
+    const fieldKey = field_mapping[key];
+    const text = sampleData[fieldKey] || "";
+
+    coordInfo.coords.forEach(pos => {
+      const isSpaced = charSpacedFields.includes(key);
+
+      if (isSpaced) {
+  let x = pos.pos[0];
+  for (let char of text) {
+    page.drawText(char, {
+      x: x,
+      y: pos.pos[1],
+      size: pos.font_size,
+      color: PDFLib.rgb(0, 0, 0)
+    });
+    x += pos.char_spacing; // Move x by char_spacing
+  }
+} else {
+  page.drawText(text, {
+    x: pos.pos[0],
+    y: pos.pos[1],
+    size: pos.font_size,
+    color: PDFLib.rgb(0, 0, 0)
+  });
+}
+
+    });
+  }
+}
+
+    // Place photo
+    const photoPos = photo_signature.photo[0];
+    pages[0].drawImage(photoImg, {
+      x: photoPos.x,
+      y: photoPos.y,
+      width: photoPos.width,
+      height: photoPos.height
+    });
+
+    // Place signatures
+    for (let pageIndex in photo_signature.signature) {
+      photo_signature.signature[pageIndex].forEach(sig => {
+        pages[pageIndex].drawImage(signatureImg, {
+          x: sig.x,
+          y: sig.y,
+          width: sig.width,
+          height: sig.height
+        });
+      });
+    }
+
+    // Place stamps
+    for (let pageIndex in photo_signature.stamps) {
+      for (let stamp of photo_signature.stamps[pageIndex]) {
+        const url = `Stamps/${stamp.file}`;
+        const stampBytes = await fetch(url).then(res => res.arrayBuffer());
+        const stampImg = await pdfDoc.embedPng(stampBytes);
+        pages[pageIndex].drawImage(stampImg, {
+          x: stamp.x,
+          y: stamp.y,
+          width: stamp.width,
+          height: stamp.height
+        });
+      }
+    }
+
+    // Download final PDF
+    const finalPdfBytes = await pdfDoc.save();
+    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'filled_form.pdf';
+    link.click();
+
+  } catch (err) {
+    console.error("Error filling PDF:", err);
+    alert(`Something went wrong:\n${err.message}`);
+  }
+}
+
+
+  </script>
+</body>
+</html>

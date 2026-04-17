@@ -1,0 +1,81 @@
+"SAHARA_G_ANOKHA_M": {
+        "pdf_file": "SAHARA_G_ANOKHA-Monthly.pdf",
+        "coordinates": {
+            0: {
+                "Account no": {"coords": [(178.58, 457.07)], "char_spacing": 18, "font_size": 15},
+"Membership no": {"coords": [(31.02, 488.61)], "char_spacing": 18, "font_size": 15},
+"Denomination": {"coords": [(371.36, 489.80)], "char_spacing": 18, "font_size": 15},
+"Authorised centre name": {"coords": [(204.76, 540.38+2),(357.67, 22.69)], "char_spacing": 0, "font_size": 9},
+
+ "Full_Name": {"coords": [(76.24-2, 398.38+1)], "char_spacing": 17.8, "font_size": 15},
+"Date of birth": {"coords": [(73.27-2, 368.04)], "char_spacing": 18, "font_size": 15},
+"AGE": {"coords": [(238.08-2, 369.23)], "char_spacing": 18, "font_size": 15},
+"Father/Husband name": {"coords": [(92.31-2, 346.02)], "char_spacing": 17.8, "font_size": 15},
+
+"Pincode": {"coords": [(354.11, 284.14)], "char_spacing": 18, "font_size": 15},
+"Mobile no": {"coords": [(103.61, 262.12)], "char_spacing": 18, "font_size": 15},
+"Region": {"coords": [(283.89, 540.97+2)], "char_spacing": 0, "font_size": 10},
+"Authorised centre code": {"coords": [(98.85-1.5, 539.78+2)], "char_spacing": 0, "font_size": 9},
+"Application no": {"coords": [(327.33, 515.98)], "char_spacing": 0, "font_size": 15},
+"Account opening date": {"coords": [
+                        {'pos': (32.21, 457.07), 'char_spacing': 18, 'font_size': 15},
+                        {'pos': (191.67-6, 22.10+3), 'char_spacing':8,'font_size':9},]},
+"Receipt no": {"coords": [(31.02, 428.51)], "char_spacing": 18, "font_size": 15},
+"Certificate no": {"coords": [(249.98, 429.10)], "char_spacing": 18, "font_size": 15},
+"Pan card": {"coords": [(285.08, 72.68)], "char_spacing": 18, "font_size": 15},
+"Pan card": {"coords": [(285.08-4, 72.68-15)], "char_spacing": 18, "font_size": 15},
+"Nominee name": {"coords": [(73.27, 171.45)], "char_spacing": 18, "font_size": 15},
+"Nominee relation": {"coords": [(59.58, 150.03)], "char_spacing": 18, "font_size": 15},
+"Nominee age": {"coords": [(222.01, 150.63)], "char_spacing": 18, "font_size": 15},
+"Proportion": {"coords": [(302.94, 148.25)], "char_spacing": 18, "font_size": 15},
+
+"State": {"coords": [(51.85, 282.13)], "char_spacing": 18, "font_size": 15},
+"District": {"coords": [(213.09, 305.3-1)], "char_spacing": 18, "font_size": 15},
+"Post": {"coords": [(47.09, 303.55)], "char_spacing": 18, "font_size": 15},
+"Street/Village": {"coords": [(211.90, 325.57)], "char_spacing": 18, "font_size": 15},
+"House no": {"coords": [(65.53-1, 325.57)], "char_spacing": 18, "font_size": 15},
+"Amount": {"coords": [(73.27, 39.95)], "char_spacing": 18, "font_size": 15},
+"Amount in word": {"coords": [(245.22, 40.54)], "char_spacing": 0, "font_size": 11},
+"Manager name": {"coords": [(150.02, 239.88+2)], "char_spacing": 0, "font_size": 11},
+"Manager code": {"coords": [(86.36, 198.82)], "char_spacing": 18, "font_size": 15},
+"Occupation": {"coords": [(335.66, 370.79)], "char_spacing": 0, "font_size": 10},
+
+"Cash/cheque": {"coords": [(116.11-5, 20.91)], "char_spacing": 0, "font_size": 10},
+            },
+            1: { "Manager name": {"coords": [(39.94, 114.82),(285.06, 99.46),(322.18, 84.74),(61.70, 43.14)], "char_spacing": 0, "font_size": 9},
+"Manager code": {"coords": [(400.90, 161.54),(176.90, 114.82),(73.22, 91.78),(75.14, 77.06),(134.02, 30.34)], "char_spacing": 0, "font_size": 9},
+   
+            }
+        },
+        "fields_by_page": {
+            0: ["Account no","Membership no", "Denomination", "Account opening date", 
+            "Receipt no", "Certificate no","Application no","Amount", "Amount in word","Cash/cheque",
+             "Authorised centre name", "Authorised centre code", "Region",  
+             "Full_Name","Occupation", "Date of birth", "AGE", "Father/Husband name",
+            "House no", "Street/Village", "Post", "District", "State", "Pincode", "Mobile no",
+            "Pan card", "Nominee name", "Nominee relation", "Nominee age", "Proportion",
+                     
+                ],  
+            1: ["Manager name", "Manager code"
+                ]             
+            },
+        "photo": {0:{"x": 380.62, "y": 530.89+10, "width": 75, "height": 100}},
+        "signature": {0:[{"x": 300.01, "y": 480+35, "width": 110, "height": 110},
+                         {"x": 317.21, "y": 200.33, "width": 110, "height": 110}],
+                      1:[{"x": 370.42, "y": 190.58-5, "width": 110, "height": 110}]
+        },
+        "stamps":{0: [
+            {"file": "Sarayan2.png","x": 310, "y": 595, "width": 100, "height": 100},            
+            {"file": "Sarayan2.png","x": 70, "y": 530+40, "width": 100, "height": 100},
+            {"file": "Msin.png","x": 317+25, "y": 150, "width": 90, "height": 90},
+            {"file": "Msing.png","x": 317+25, "y":115, "width": 90, "height": 90},
+            ],
+          1:[{"file": "Sarayan2.png","x": 250, "y": 190, "width": 100, "height": 100},
+             
+             {"file": "Msin.png","x": 400-15, "y": 135, "width": 90, "height": 90},
+             {"file": "Msing.png","x": 400-15, "y": 100, "width": 90, "height": 90},             
+             {"file": "Msing.png","x": 400, "y": 0, "width": 90, "height": 90},
+             {"file": "Msin.png","x": 390, "y": 28, "width": 90, "height": 90},
+             ] 
+        },            
+            "required_fields": ["Full_Name","Membership no", "Account no"]},

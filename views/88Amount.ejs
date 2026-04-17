@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Account Amount Verification</title>
+  <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+<link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #5D54A4, #7C78B8);
+      color: white;
+      text-align: center;
+      height: 100vh;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 400px;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+      animation: fadeIn 1.2s ease-out;
+    }
+
+    .form-card input {
+      width: 90%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+
+    .form-card button {
+      padding: 12px 20px;
+      background: #00c6ff;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+
+    .form-card button:hover {
+      background: #0072ff;
+      transform: scale(1.05);
+    }
+
+    .result, .error {
+      margin-top: 20px;
+      font-size: 1.3rem;
+      padding: 12px;
+      border-radius: 10px;
+      animation: popIn 0.8s ease-out;
+    }
+
+    .result {
+      background: #00c853;
+    }
+
+    .error {
+      background: #d32f2f;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes popIn {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="title">💰 Account Amount Verification</h1>
+
+    <form method="POST" action="/fetch" class="form-card">
+      <input type="text" name="accNo" placeholder="Enter Account Number">
+      <input type="text" name="recNo" placeholder="Enter Receipt Number">
+      <button type="submit">🔍 Fetch Amount</button>
+    </form>
+
+    <% if (error) { %>
+      <div class="error"><%= error %></div>
+    <% } %>
+
+    <% if (result) { %>
+      <div class="result"><%= result %></div>
+    <% } %>
+  </div>
+</body>
+</html>

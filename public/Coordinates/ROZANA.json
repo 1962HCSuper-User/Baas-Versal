@@ -1,0 +1,66 @@
+"ROZANA": {
+        "pdf_file": "ROZANA.pdf",
+        "coordinates": {
+            0: {"Membership no": {"coords": [(44.56+2, 569.69)], "char_spacing": 21, "font_size": 15},
+"Account opening Date": {"coords": [(43.81+2, 531.02)], "char_spacing": 21, "font_size": 15},
+"Account no": {"coords": [(231.98+2, 531.02)], "char_spacing": 21, "font_size": 15},
+"Authorised centre code": {"coords": [(125.62, 633.66)], "char_spacing": 0, "font_size": 11},
+"Authorised centre name": {"coords": [(255.78, 634.41)], "char_spacing": 0, "font_size": 11},
+"Region": {"coords": [(345.03, 634.41)], "char_spacing": 0, "font_size": 11},
+"Denomination": {"coords": [(476.68+2, 571.18)], "char_spacing": 21, "font_size": 15},
+"Certificata No": {"coords": [(307.84, 496.06)], "char_spacing": 21, "font_size": 15},
+"Application no": {"coords": [(392.63, 602.42)], "char_spacing": 0, "font_size": 16},
+"Receipt no": {"coords": [(45.30, 496.80)], "char_spacing": 21, "font_size": 15},
+"Full_Name": {"coords": [(99.59, 462.59)], "char_spacing": 21, "font_size": 15},
+"Date of birth": {"coords": [(94.39, 421.68)], "char_spacing": 21, "font_size": 15},
+"Father/Husband name": {"coords": [(117.44+2, 395.64)], "char_spacing": 21, "font_size": 15},
+"AGE": {"coords": [(295.20, 421.68)], "char_spacing": 21, "font_size": 15},
+"Street/Village": {"coords": [(264.71, 359.19)], "char_spacing": 21, "font_size": 15},
+"Post": {"coords": [(65.38, 333.90)], "char_spacing": 21, "font_size": 15},
+"District": {"coords": [(265.45, 333.90)], "char_spacing": 21, "font_size": 15},
+"State": {"coords": [(72.08, 308.62)], "char_spacing": 21, "font_size": 15},
+"Pincode": {"coords": [(437.26, 309.36)], "char_spacing": 21, "font_size": 15},
+"Manager code": {"coords": [(114.47, 242.42),(114.47, 201.51)], "char_spacing": 21, "font_size": 15},
+
+"Manager name": {"coords": [(142.73, 265.47),(93.64, 224.56)], "char_spacing": 0, "font_size": 12},
+"House no": {"coords": [(86.95, 359.19)], "char_spacing": 21, "font_size": 15},
+"Mobile no": {"coords": [(134.55, 283.33)], "char_spacing": 21, "font_size": 15},
+"Nominee name": {"coords": [(95.13, 173.24)], "char_spacing": 21, "font_size": 15},
+"Nominee relation": {"coords": [(79.51, 145.72)], "char_spacing": 21, "font_size": 15},
+"Nominee age": {"coords": [(275.12, 145.72)], "char_spacing": 21, "font_size": 15},
+"Proportion": {"coords": [(372.55, 142.74)], "char_spacing": 21, "font_size": 15},
+"Pan card": {"coords": [(350.24, 52.74)], "char_spacing": 21, "font_size": 15},
+
+            },
+            1: {"Manager name": {"coords": [(36.44, 117.52-2),(299.73, 98.93-2),(346.59, 89.26-2),(63.22, 48.35-2)], "char_spacing": 0, "font_size": 10},
+
+"Manager code": {"coords": [(192.63, 117.52-2),(470.79, 99.67-2),(470.79, 90.00-2),(150.98, 33.47-2),(430+33,180)], "char_spacing": 0, "font_size": 10},
+         
+            }
+        },
+        "fields_by_page": {
+            0: ["Account no","Membership no", "Account opening Date", "Application no", "Receipt no", 
+            "Denomination", "Certificata No", "Denomination", "Certificata No",
+                "Pan card","Full_Name", "Date of birth", "Father/Husband name", 
+                "AGE","Nominee name", "Nominee relation",
+                  "Nominee age", "Proportion","House no", "Street/Village", "Post", "District", 
+                "State", "Pincode", "Mobile no", "Authorised centre code", "Authorised centre name", "Region", ],  
+            1: ["Manager name", "Manager code"]             
+            },
+        "photo": {0:{"x": 485-5, "y": 660, "width": 75, "height": 100}},
+        "signature": {0:[{"x": 366.42+25, "y": 590.64+25, "width": 110, "height": 110},
+                         {"x": 432, "y": 245, "width": 110, "height": 110}],
+                      1:[{"x": 394.86+40, "y": 170+40, "width": 110, "height": 110}]
+        },
+        "stamps":{0: [
+            {"file": "Sarayan2.png","x": 400+2, "y": 700, "width": 100, "height": 100},            
+            {"file": "Sarayan2.png","x": 220+25, "y": 15, "width": 100, "height": 100}
+            ],
+          1:[ {"file": "Sarayan2.png","x": 225, "y": 250, "width": 100, "height": 100},
+             
+             {"file": "Msing.png","x": 489.32-25, "y": 150-35, "width": 90, "height": 90},
+             {"file": "Msin.png","x": 489.32-20, "y": 150, "width": 90, "height": 90},
+             {"file": "Msing.png","x": 489.32-25, "y": 2, "width": 90, "height": 90},
+             {"file": "Msin.png","x": 489.32-20, "y": 30+5, "width": 90, "height": 90},] 
+        },            
+            "required_fields": [ "Membership no","Account no","Full_Name"]},

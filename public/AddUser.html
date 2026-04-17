@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <meta charset="UTF-8">
+    <title>Sahara Membership Form</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 20px; 
+            background-color: #f4f4f9; 
+            color: #333; 
+        }
+        h2, h3, h4 { color: #2c3e50; }
+        .step { 
+            display: none; 
+            opacity: 0; 
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out; 
+            transform: translateY(20px); 
+        }
+        .step.active { 
+            display: block; 
+            opacity: 1; 
+            transform: translateY(0); 
+        }
+        table, td, th { 
+            border: 1px solid #ccc; 
+            border-collapse: collapse; 
+            padding: 8px; 
+        }
+        input, select { 
+            padding: 8px; 
+            margin: 5px 0; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+            width: 100%; 
+            max-width: 300px; 
+            transition: border-color 0.3s; 
+        }
+        input:focus, select:focus { 
+            border-color: #3498db; 
+            outline: none; 
+        }
+        button { 
+            padding: 10px 20px; 
+            margin: 10px 5px; 
+            background-color: #3498db; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            transition: background-color 0.3s, transform 0.2s; 
+        }
+        button:hover { 
+            background-color: #2980b9; 
+            transform: scale(1.05); 
+        }
+        button:active { 
+            transform: scale(0.95); 
+        }
+        label { 
+            display: block; 
+            margin-top: 10px; 
+            font-weight: bold; 
+        }
+        ul { 
+            list-style-type: none; 
+            padding: 0; 
+        }
+        li { 
+            background: #ecf0f1; 
+            margin: 5px 0; 
+            padding: 10px; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+            transition: box-shadow 0.3s; 
+        }
+        li:hover { 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2); 
+        }
+        #accountsContainer div { 
+            background: #fff; 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+        }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Sahara Membership Process</h2>
+
+<div id="step0" class="step active">
+    <h3>Step 0: Personal Details</h3>
+    <label>Profile Image: <input type="file" id="profileImage"></label><br>
+    <label>Full Name: <input id="fullName" list="fullNameSuggestions"><datalist id="fullNameSuggestions"></datalist></label><br>
+    <label>Father's Name: <input id="fatherName" list="fatherNameSuggestions"><datalist id="fatherNameSuggestions"></datalist></label><br>
+    <label>Gender:
+        <select id="gender">
+            <option value="">-- Select --</option>
+            <option>Male</option>
+            <option>Female</option>
+            <option>Other</option>
+        </select>
+    </label><br>
+    <label>Date of Birth: <input type="date" id="dob"></label><br>
+    <label>Mobile Number: <input id="mobile" list="mobileSuggestions"><datalist id="mobileSuggestions"></datalist></label><br>
+    <label>Occupation: <input id="occupation" list="occupationSuggestions"><datalist id="occupationSuggestions"></datalist></label><br>
+    <label>CRN Number: <input id="crn" list="crnSuggestions"><datalist id="crnSuggestions"></datalist></label><br>
+    <h4>Address Details</h4>
+    <label>House/Flat Number: <input id="houseNo" list="houseNoSuggestions"><datalist id="houseNoSuggestions"></datalist></label><br>
+    <label>Village/City: <input id="city" list="citySuggestions"><datalist id="citySuggestions"></datalist></label><br>
+    <label>Post Office: <input id="postOffice" list="postOfficeSuggestions"><datalist id="postOfficeSuggestions"></datalist></label><br>
+    <label>District: <input id="district" list="districtSuggestions"><datalist id="districtSuggestions"></datalist></label><br>
+    <label>State: <input id="state" list="stateSuggestions"><datalist id="stateSuggestions"></datalist></label><br>
+    <label>Country: <input id="country" list="countrySuggestions"><datalist id="countrySuggestions"></datalist></label><br>
+    <label>PIN Code: <input id="pin" list="pinSuggestions"><datalist id="pinSuggestions"></datalist></label><br>
+    <label>Aadhaar Number: <input id="aadhaar" list="aadhaarSuggestions"><datalist id="aadhaarSuggestions"></datalist></label><br>
+    <label>PAN Number: <input id="pan" list="panSuggestions"><datalist id="panSuggestions"></datalist></label><br>
+    <label>Upload Signature: <input type="file" id="signature"></label><br>
+    <button onclick="saveUserInfo()">Next ></button>
+</div>
+
+<div id="step1" class="step">
+    <h3>Step 1: Add Companies & Memberships</h3>
+    <label>Company:
+        <select id="company">
+            <option value="SAHARA CREDIT COOPERATIVE SOCIETY LIMITED">SAHARA CREDIT COOPERATIVE SOCIETY LIMITED</option>
+            <option value="HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED">HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED</option>
+            <option value="SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED">SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED</option>
+        </select>
+    </label><br>
+    Member Name: <input id="memberName" oninput="checkNameMatch()" ><br>
+    <span id="nameError" class="error" style="display: none;">Name mismatch with Full Name</span><br>
+    Membership No: <input id="membershipNo"><br>
+    Date: <input id="membershipDate" type="date"><br>
+    Application No: <input id="applicationNo"><br>
+    <button onclick="addMembership()">Add Membership</button>
+    <h4>Added Memberships</h4>
+    <ul id="membershipList"></ul>
+    <button onclick="toStep2()">Next</button>
+</div>
+
+<div id="step2" class="step">
+    <h3>Step 2: Accounts for Membership</h3>
+    <div id="membershipHeading"></div>
+    <label>Scheme: <select id="scheme"></select></label><br>
+    <label>Auth Code:
+        <select id="authCode">
+            <option value="">-- Select Auth Code --</option>
+            <option value="6163">6163</option>
+            <option value="1962">1962</option>
+            <option value="2444">2444</option>
+        </select>
+    </label><br>
+    <label>Branch:
+        <select id="branch">
+            <option value="">-- Select Branch --</option>
+            <option value="HATHRAS F.C">HATHRAS F.C</option>
+            <option value="SADABAD">SADABAD</option>
+            <option value="ALIGARH">ALIGARH</option>
+        </select>
+    </label><br>
+    <label>Region:
+        <select id="region">
+            <option value="">-- Select Region --</option>
+            <option value="ALIGARH">ALIGARH</option>
+            <option value="DELHI">DELHI</option>
+            <option value="AGRA RO">AGRA RO</option>
+            <option value="MEERUT">MEERUT</option>
+        </select>
+    </label><br>
+    Account Opening Date: <input id="accountDate" type="date"><br>
+    <h4>Nominee Details</h4>
+    Nominee Name: <input id="nomineeName"><br>
+    Nominee Relation: <input id="nomineeRelation"><br>
+    Nominee DOB: <input id="nomineeDOB" type="date"><br>
+    <input type="checkbox" id="isSequential"> Accounts in Sequence?<br>
+    Start Account No: <input id="accNo" value="1000"><br>
+    Start Passbook No: <input id="passNo" value="5000"><br>
+    Start Receipt No: <input id="recNo" value="7000"><br>
+    If sequential, how many?: <input id="seqCount" value="1"><br>
+    <div id="accountsContainer"></div>
+    <button onclick="addAccounts()">Add Accounts</button>
+    <button onclick="nextMembership()">Next Membership</button>
+    <button onclick="finish()">Finish</button>
+</div>
+
+<script>
+// Field Remember Buttons (suggestions)
+function saveSuggestion(fieldId) {
+    const input = document.getElementById(fieldId);
+    let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+    if (input.value && !suggestions.includes(input.value)) {
+        suggestions.push(input.value);
+        localStorage.setItem(fieldId, JSON.stringify(suggestions));
+    }
+}
+
+function loadSuggestions(fieldId) {
+    const datalist = document.getElementById(fieldId + "Suggestions");
+    let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+    datalist.innerHTML = "";
+    suggestions.forEach(value => {
+        const option = document.createElement("option");
+        option.value = value;
+        datalist.appendChild(option);
+    });
+}
+
+const fields = ["fullName", "fatherName", "mobile", "occupation", "crn", "houseNo", "city", "postOffice", "district", "state", "country", "pin", "aadhaar", "pan"];
+fields.forEach(loadSuggestions);
+fields.forEach(id => {
+    document.getElementById(id).addEventListener("blur", () => {
+        saveSuggestion(id);
+        loadSuggestions(id);
+    });
+});
+
+let userInfo = {};
+function saveUserInfo() {
+    userInfo = {
+        fullName: document.getElementById("fullName").value,
+        fatherName: document.getElementById("fatherName").value,
+        gender: document.getElementById("gender").value,
+        dob: document.getElementById("dob").value,
+        mobile: document.getElementById("mobile").value,
+        occupation: document.getElementById("occupation").value,
+        crn: document.getElementById("crn").value,
+        houseNo: document.getElementById("houseNo").value,
+        postOffice: document.getElementById("postOffice").value,
+        state: document.getElementById("state").value,
+        country: document.getElementById("country").value,
+        city: document.getElementById("city").value,
+        district: document.getElementById("district").value,
+        pin: document.getElementById("pin").value,
+        aadhaar: document.getElementById("aadhaar").value,
+        pan: document.getElementById("pan").value,
+        profileImage: document.getElementById("profileImage").files[0]?.name || '',
+        signature: document.getElementById("signature").files[0]?.name || ''
+    };
+
+    // Switch steps with animation
+    document.getElementById("step0").classList.remove("active");
+    document.getElementById("step1").classList.add("active");
+}
+
+function checkNameMatch() {
+    const fullName = userInfo.fullName?.trim().toUpperCase();
+    const memberNameField = document.getElementById("memberName");
+    const memberName = memberNameField.value.trim().toUpperCase();
+    const errorText = document.getElementById("nameError");
+    if (fullName && memberName && fullName !== memberName) {
+        memberNameField.style.border = "2px solid red";
+        errorText.style.display = "inline";
+    } else {
+        memberNameField.style.border = "1px solid #ddd";
+        errorText.style.display = "none";
+    }
+}
+
+const memberships = [];
+let currentMembership = -1;
+
+const schemesByCompany = {
+    "SAHARA CREDIT COOPERATIVE SOCIETY LIMITED": [
+        "sahara s bhavishya 301.pdf",
+        "sahara s bhavishya 3011.psd",
+        "ALL membership.pdf",
+        "SAHARA 4DS.pdf",
+        "SAHARA A SELECT.pdf",
+        "SAHARA C ANOKHA.pdf",
+        "SAHARA DAY.pdf",
+        "SAHARA E SHINE--96 Month.pdf",
+        "SAHARA G ANOKHA- Monthly.pdf",
+        "SAHARA I SELECT..pdf",
+        "SAHARA M BENEFIT-60 Month SCCSL.pdf",
+        "SAHARA MINOR.pdf",
+        "SAHARA N SHINE.pdf",
+        "SAHARA S ANOKHA-Monthly.pdf",
+        "SAHARA SPECIAL.pdf",
+        "SAHARA SUPER.pdf",
+        "SAHARA WORKERS SC.pdf",
+        "SAHARA.V. DOUBLE.pdf",
+        "Y SELECT.pdf"
+    ],
+    "HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED": [
+        "GOLDEN A DOUBLE.pdf",
+        "HOME POINT-60- Monthly HICCSL.pdf",
+        "Member sahariyan.JPG",
+        "ROZANA.pdf",
+        "SAHARA GOLDEN 24.pdf",
+        "SAHARA U GOLDEN.pdf"
+    ],
+    "SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED": [
+        "GLOBAL FOUR.pdf",
+        "GLOBAL TRIPLE.pdf",
+        "GLOBAL.pdf",
+        "Saharayn.pdf",
+        "STAR TWO.pdf",
+        "SUPER AB..pdf",
+        "SUPER BB..pdf",
+        "SUPER TT.pdf"
+    ]
+};
+
+function addMembership() {
+    const company = document.getElementById('company').value;
+    const membershipNo = document.getElementById('membershipNo').value;
+    const date = document.getElementById('membershipDate').value;
+    const appNo = document.getElementById('applicationNo').value;
+    const memberName = document.getElementById('memberName').value;
+
+    if (!membershipNo || !date || !appNo) {
+        alert('Fill all fields');
+        return;
+    }
+
+    memberships.push({ company, membershipNo, memberName, date, appNo, accounts: [] });
+    const li = document.createElement('li');
+    li.textContent = `${company} - ${membershipNo}`;
+    document.getElementById('membershipList').appendChild(li);
+
+    document.getElementById('membershipNo').value = '';
+    document.getElementById('membershipDate').value = '';
+    document.getElementById('applicationNo').value = '';
+    document.getElementById('memberName').value = '';
+}
+
+function toStep2() {
+    if (memberships.length === 0) {
+        alert('Add at least one membership');
+        return;
+    }
+    document.getElementById('step1').classList.remove("active");
+    document.getElementById('step2').classList.add("active");
+    nextMembership();
+}
+
+function nextMembership() {
+    if (currentMembership + 1 >= memberships.length) {
+        alert('All memberships done');
+        return;
+    }
+    currentMembership++;
+    const mem = memberships[currentMembership];
+    document.getElementById('membershipHeading').innerHTML = `<strong>Filling accounts for:</strong> ${mem.company} - ${mem.membershipNo}`;
+    populateSchemes(mem.company);
+    document.getElementById('accountsContainer').innerHTML = '';
+}
+
+function populateSchemes(company) {
+    const schemeSelect = document.getElementById('scheme');
+    schemeSelect.innerHTML = '';
+    const schemes = schemesByCompany[company] || [];
+    schemes.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s;
+        opt.textContent = s;
+        schemeSelect.appendChild(opt);
+    });
+}
+
+function addAccounts() {
+    const scheme = document.getElementById('scheme').value;
+    const authCode = document.getElementById('authCode').value;
+    const branch = document.getElementById('branch').value;
+    const region = document.getElementById('region').value;
+    const accountDate = document.getElementById('accountDate').value;
+    const nomineeName = document.getElementById('nomineeName').value;
+    const nomineeRelation = document.getElementById('nomineeRelation').value;
+    const nomineeDOB = document.getElementById('nomineeDOB').value;
+    const isSeq = document.getElementById('isSequential').checked;
+    let accNo = parseInt(document.getElementById('accNo').value);
+    let passNo = parseInt(document.getElementById('passNo').value);
+    let recNo = parseInt(document.getElementById('recNo').value);
+    const seqCount = parseInt(document.getElementById('seqCount').value);
+
+    if (!scheme || !authCode || !branch || !region || !accountDate) {
+        alert('Fill all fields');
+        return;
+    }
+
+    const container = document.getElementById('accountsContainer');
+
+    for (let i = 0; i < seqCount; i++) {
+        const appNo = prompt(`Enter Application No for account ${i + 1}`);
+        if (!appNo) {
+            alert('Application No required');
+            return;
+        }
+        const amount = prompt(`Enter Amount for account ${i + 1}`);
+        const amountWords = numberToWords(parseInt(amount));
+
+        const account = {
+            nomineeName, nomineeRelation, nomineeDOB, scheme, authCode, branch, region, accountDate,
+            accNo, passNo, recNo, appNo, amount, amountWords
+        };
+        memberships[currentMembership].accounts.push(account);
+
+        const div = document.createElement('div');
+        div.innerHTML = `Account: ${accNo}, Passbook: ${passNo}, Receipt: ${recNo}, Application: ${appNo}, Amount: ${amount} (${amountWords}), Scheme: ${scheme}<br>
+                         Nominee: ${nomineeName} (${nomineeRelation}), DOB: ${nomineeDOB}<hr>`;
+        container.appendChild(div);
+
+        if (isSeq) {
+            accNo++;
+            passNo++;
+            recNo++;
+        }
+    }
+    document.getElementById('accNo').value = accNo;
+    document.getElementById('passNo').value = passNo;
+    document.getElementById('recNo').value = recNo;
+}
+
+function calculateAgeOnDate(dob, refDate) {
+    if (!dob || !refDate) return '';
+    const birthDate = new Date(dob);
+    const targetDate = new Date(refDate);
+    let age = targetDate.getFullYear() - birthDate.getFullYear();
+    const m = targetDate.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && targetDate.getDate() < birthDate.getDate())) age--;
+    return age;
+}
+
+function formatDateDDMMYYYY(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}${month}${year}`;
+}
+
+function formatDateYYYYMMDD(dateStr) {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+}
+
+function getSex(gender) {
+    if (gender === 'Male') return 'M';
+    if (gender === 'Female') return 'F';
+    return 'O';
+}
+
+function generateMembershipText(m, index) {
+    let txt = '';
+    const fullAddress = [userInfo.houseNo, userInfo.city, userInfo.postOffice, userInfo.district, userInfo.state, userInfo.pin].filter(Boolean).join(' ');
+    const dobDDMMYYYY = formatDateDDMMYYYY(userInfo.dob);
+    const dobFormatted = formatDateYYYYMMDD(userInfo.dob);
+    const regDate = formatDateYYYYMMDD(m.date);
+    const age = calculateAgeOnDate(userInfo.dob, m.date);
+    const centreCode = m.accounts[0]?.authCode || '';
+    const centreName = m.accounts[0]?.branch || '';
+    const region = m.accounts[0]?.region || '';
+    const occupation = userInfo.occupation || 'Other';
+    const stateAbbr = userInfo.state?.toUpperCase().substring(0, 2) || 'UP';
+    const permntAddress = `${fullAddress} ${userInfo.state} - ${userInfo.pin}`;
+    const address = `${fullAddress} ${userInfo.state}, ${userInfo.city},- ${userInfo.pin}`;
+
+    txt += `=== MEMBER INFO ===\n`;
+    txt += `membershipNo: ${m.membershipNo}\n`;
+    txt += `TITLE: 801\n`;
+    txt += `fullName: ${userInfo.fullName.toUpperCase()}\n`;
+    txt += `dateOfBirth: ${dobDDMMYYYY}\n`;
+    txt += `dateOfBirthFormated: ${dobFormatted}\n`;
+    txt += `SEX: ${getSex(userInfo.gender)}\n`;
+    txt += `mobileNo: ${userInfo.mobile || ''}\n`;
+    txt += `address: ${address}\n`;
+    txt += `OCCUPATION: ${occupation}\n`;
+    txt += `houseNo: ${userInfo.houseNo || ''}\n`;
+    txt += `Village: ${userInfo.city}\n`;
+    txt += `street: ${userInfo.city}\n`;
+    txt += `post: ${userInfo.postOffice}\n`;
+    txt += `district: ${userInfo.district}\n`;
+    txt += `CITY: ${userInfo.city}\n`;
+    txt += `state: ${stateAbbr}\n`;
+    txt += `pincode: ${userInfo.pin}\n`;
+    txt += `guardianName: ${userInfo.fatherName.toUpperCase()}\n`;
+    txt += `MOTHERNAME: \n`;
+    txt += `WFATHUSNAME: \n`;
+    txt += `WITNESS: \n`;
+    txt += `REGDATE: ${regDate}\n`;
+    txt += `DOM: \n`;
+    txt += `AGE: ${age}\n`;
+    txt += `CHILDS: 0\n`;
+    txt += `PERMNT_ADDRESS: ${permntAddress}\n`;
+    txt += `PRSNT_ADDRESS: - 0\n`;
+    txt += `RELIGION: HINDU\n`;
+    txt += `CASTE: GE\n`;
+    txt += `panCard: ${userInfo.pan || ''}\n`;
+    txt += `BGROUP: O+\n`;
+    txt += `COUNTRY: INDIA\n`;
+    txt += `MSTATUS: M\n`;
+    txt += `EDUCATION: 831\n`;
+    txt += `centreCode: ${centreCode}\n`;
+    txt += `centreName: ${centreName}\n`;
+    txt += `region: ${region}\n`;
+    txt += `Verifier: JAGDISH PRSAD\n`;
+    txt += `VerifierCode: 196200010\n`;
+    txt += `VerifierFatherName: OM PRAKASH\n`;
+    txt += `VerifierAddress: KALWARI, HATHRAS\n`;
+    txt += `---------------------\n\n`;
+
+    m.accounts.forEach((a, accIndex) => {
+        const accountDateDDMMYYYY = formatDateDDMMYYYY(a.accountDate);
+        const accountDateFormatted = formatDateYYYYMMDD(a.accountDate);
+        const memberAge = calculateAgeOnDate(userInfo.dob, a.accountDate);
+        const nomineeAge = calculateAgeOnDate(a.nomineeDOB, a.accountDate);
+        const schemeCode = '930128';
+        const scvType = 1;
+        const branchCode = a.authCode;
+        const fldwCode = `${a.authCode}10342`;
+        const maturDate = formatDateYYYYMMDD(new Date(a.accountDate)); // placeholder
+        const depostMode = 'D';
+        const paymentMode = 'CASH';
+        const proofDocument = 'ADDHAR CARD';
+        const intPMode = 'N';
+        const daysOfDep = 25;
+        const certificateNo = '0000000000000';
+        const denomination = a.amount;
+        const amountNum = parseInt(a.amount);
+        const wordsCapitalized = a.amountWords.charAt(0).toUpperCase() + a.amountWords.slice(1);
+        const amountInWords = (amountNum < 100 ? 'and ' : '') + wordsCapitalized;
+        const passbookNo = a.passNo || 0;
+        const proportion = 100;
+        const nominee1 = `${a.nomineeName.toUpperCase()},${a.nomineeRelation.toUpperCase()},${nomineeAge},${proportion}`;
+        const nominee2 = '';
+
+        txt += `=== ACCOUNT INFO ===\n`;
+        txt += `accountNo: ${a.accNo}\n`;
+        txt += `schemeName: ${schemeCode}\n`;
+        txt += `SCVTYPE: ${scvType}\n`;
+        txt += `ACCOUNTNAME: ${userInfo.fullName.toUpperCase()}\n`;
+        txt += `age: ${memberAge}\n`;
+        txt += `accountOpeningDate: ${accountDateDDMMYYYY}\n`;
+        txt += `accountOpeningDateFormatted: ${accountDateFormatted}\n`;
+        txt += `BRANCHCODE: ${branchCode}\n`;
+        txt += `applicationNo: ${a.appNo}\n`;
+        txt += `FLDWCODE: ${fldwCode}\n`;
+        txt += `ACCTRFDATE: \n`;
+        txt += `MATURDATE: ${maturDate}\n`;
+        txt += `DEPOSTMODE: ${depostMode}\n`;
+        txt += `paymentMode: ${paymentMode}\n`;
+        txt += `proofDocument: ${proofDocument}\n`;
+        txt += `INTPMODE: ${intPMode}\n`;
+        txt += `DAYSOFDEP: ${daysOfDep}\n`;
+        txt += `certificateNo: ${certificateNo}\n`;
+        txt += `receiptNo: ${a.recNo}\n`;
+        txt += `denomination: ${denomination}\n`;
+        txt += `amount: ${a.amount}\n`;
+        txt += `amountInWords: ${amountInWords}\n`;
+        txt += `Passbook NO: ${passbookNo}\n`;
+        txt += `nomineeName: ${a.nomineeName.toUpperCase()}\n`;
+        txt += `nomineeAge: ${nomineeAge}\n`;
+        txt += `nomineeAgeFromDepc: ${nomineeAge}\n`;
+        txt += `nomineeRelation: ${a.nomineeRelation.toUpperCase()}\n`;
+        txt += `proportion: ${proportion}\n`;
+        txt += `nominee1: ${nominee1}\n`;
+        txt += `nominee2: ${nominee2}\n`;
+        txt += `---------------------\n\n`;
+    });
+
+    return txt;
+}
+
+
+async function finish() {
+    try {
+        const dirHandle = await window.showDirectoryPicker();
+        const pendingDir = await dirHandle.getDirectoryHandle('Pending', { create: true });
+        for (let i = 0; i < memberships.length; i++) {
+            const m = memberships[i];
+            const txt = generateMembershipText(m, i);
+            const filename = `${userInfo.aadhaar}_membership_${m.membershipNo}.txt`;
+            const fileHandle = await pendingDir.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(txt);
+            await writable.close();
+        }
+        alert('Files saved successfully in the selected directory under Pending folder.');
+    } catch (error) {
+        console.error('Error saving files:', error);
+        alert('Failed to save files. Your browser may not support the File System Access API, or permission was denied.');
+    }
+}
+
+function numberToWords(n) {
+    const a = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+        "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+    const b = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+    if (n === 0) return "";
+    if (n < 20) return a[n];
+    if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+    if (n < 1000) return a[Math.floor(n / 100)] + " hundred" + (n % 100 ? " " + numberToWords(n % 100) : "");
+    if (n < 100000) return numberToWords(Math.floor(n / 1000)) + " thousand" + (n % 1000 ? " " + numberToWords(n % 1000) : "");
+    if (n < 10000000) return numberToWords(Math.floor(n / 100000)) + " lakh" + (n % 100000 ? " " + numberToWords(n % 100000) : "");
+    if (n < 10000000000) return numberToWords(Math.floor(n / 10000000)) + " crore" + (n % 10000000 ? " " + numberToWords(n % 10000000) : "");
+    return "Number too large";
+}
+</script>
+</body>
+</html>

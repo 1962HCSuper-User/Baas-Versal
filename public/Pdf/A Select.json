@@ -1,0 +1,59 @@
+coordinates = {
+    0: {
+        "Membership no": {"coords": [(23.50, 501.10)], "char_spacing": 18, "font_size": 15},
+        "Account opening date": {
+            "coords": [{"pos": (23.50, 471.70), "char_spacing": 18, "font_size": 15},
+                       {"pos": (181.10, 30.30), "char_spacing": 7.5, "font_size": 8}]
+        },
+        "Date of birth": {
+            "coords": [{"pos": (65.50, 382.90), "char_spacing": 18, "font_size": 15},
+                       {"pos": (250.50, 382.90), "char_spacing": 18, "font_size": 15}]
+        },
+        "Account no": {"coords": [(180.70, 473.50)], "char_spacing": 18, "font_size": 15},
+        "Full_Name": {"coords": [(66.50, 413.50)], "char_spacing": 18, "font_size": 15},
+        "AGE": {"coords": [(232.90, 383.50)], "char_spacing": 18, "font_size": 15},
+        "Father/Husband name": {"coords": [(83.70, 360.10)], "char_spacing": 18, "font_size": 15},
+        "Receipt no": {"coords": [(23.50, 443.50)], "char_spacing": 18, "font_size": 15},
+        "Certificate no": {"coords": [(242.50, 444.70)], "char_spacing": 18, "font_size": 15},
+        "Mobile no": {"coords": [(97.90, 274.30)], "char_spacing": 18, "font_size": 15},
+        "Nominee age": {"coords": [(216.10, 159.70)], "char_spacing": 18, "font_size": 15},
+    }
+}
+
+field_mapping = {
+    "Membership no": "membershipNo",
+    "Account opening date": "accountOpeningDate",
+    "Date of birth": "dateOfBirth",
+    "Account no": "accountNo",
+    "Full_Name": "fullName",
+    "AGE": "age",
+    "Father/Husband name": "guardianName",
+    "Receipt no": "receiptNo",
+    "Certificate no": "certificateNo",
+    "Mobile no": "mobileNo",
+    "Nominee age": "nomineeAge",
+}
+
+photo_signature = {
+    "photo": {0: {"x": 380, "y": 545, "width": 75, "height": 100}},
+    "signature": {
+        0: [{"x": 300.90, "y": 512.70, "width": 110, "height": 110},
+            {"x": 320.50, "y": 210, "width": 110, "height": 110}],
+        1: [{"x": 384.17, "y": 255, "width": 110, "height": 110}]
+    },
+    "stamps": {
+        0: [
+            {"file": "Sahara.png", "x": 300, "y": 550, "width": 100, "height": 100},
+            {"file": "Sahara.png", "x": 190, "y": 70, "width": 100, "height": 100},
+            {"file": "Msin.png", "x": 358, "y": 190, "width": 90, "height": 90},
+            {"file": "Msing.png", "x": 365, "y": 150, "width": 100, "height": 100},
+        ],
+        1: [
+            {"file": "Sahara.png", "x": 280, "y": 300, "width": 100, "height": 100},
+            {"file": "Msing.png", "x": 390, "y": 2, "width": 90, "height": 90},
+            {"file": "Msin.png", "x": 385, "y": 35, "width": 90, "height": 90},
+            {"file": "Msin.png", "x": 408, "y": 180, "width": 90, "height": 90},
+            {"file": "Msing.png", "x": 405, "y": 150, "width": 90, "height": 90},
+        ]
+    }
+}

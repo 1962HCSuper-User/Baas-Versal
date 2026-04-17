@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Sahara Membership Form</title>
+    <link rel="icon" href="/favicon.ico?v=2" type="image/x-icon">
+    <link rel="shortcut icon" href="/favicon.ico?v=2" type="image/x-icon">
+    <style>
+        /* ====== GLOBAL ====== */
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f6f9;
+            color: #333;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5 {
+            margin: 0;
+        }
+
+        /* ====== HEADER ====== */
+        header {
+            background: linear-gradient(90deg, #004080, #0066cc);
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        header h5 {
+            font-size: 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        /* ====== NAV ====== */
+        nav {
+            background: #0055aa;
+            display: flex;
+            justify-content: center;
+            padding: 12px 0;
+        }
+
+        nav a {
+            color: white;
+            font-weight: 500;
+            margin: 0 20px;
+            font-size: 15px;
+            position: relative;
+        }
+
+        nav a::after {
+            content: "";
+            display: block;
+            height: 2px;
+            background: white;
+            width: 0;
+            transition: width 0.3s ease;
+            margin: 0 auto;
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* ====== MAIN CONTENT ====== */
+        main {
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .step {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: translateY(20px);
+        }
+
+        .step.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2,
+        h3,
+        h4 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+            outline: none;
+        }
+
+        .file-input {
+            padding: 8px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-start;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #2980b9, #1f618d);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .delete-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            padding: 6px 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .delete-btn:hover {
+            background: linear-gradient(135deg, #c0392b, #a93226);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        li:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateX(5px);
+        }
+
+        #accountsContainer div {
+            background: white;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #3498db;
+        }
+
+        #accountsContainer div:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 30px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        /* ====== FOOTER ====== */
+        footer {
+            background: #004080;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            font-size: 14px;
+            margin-top: auto;
+        }
+
+        /* ====== RESPONSIVE ====== */
+        @media (max-width: 768px) {
+            main {
+                padding: 20px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            header {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+
+            nav {
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                margin: 5px;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- ===== HEADER ===== -->
+    <header>
+        <h1>Sahara India Pariwar</h1>
+        <h5>Sahara Membership Process</h5>
+        <span>Secure • Reliable • Professional</span>
+    </header>
+
+    <!-- ===== NAVIGATION ===== -->
+    <nav>
+        <a href="/">Home</a>
+        <a href="/Sahara_Credit">Sahara Credit Cooperative Society Ltd.</a>
+        <a href="/amount">Deposit Amount Check</a>
+        <a href="/sarayan">Universal</a>
+        <a href="/AddUser">Add User</a>
+        <a href="/reports">Other Portal</a>
+        <a href="/about">73 Image View</a>
+    </nav>
+
+    <!-- ===== MAIN ===== -->
+    <main>
+        <div id="step0" class="step active section-card">
+            <h3>Step 0: Personal Details</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Name:</label>
+                    <input id="fullName" list="fullNameSuggestions">
+                    <datalist id="fullNameSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Father's Name:</label>
+                    <input id="fatherName" list="fatherNameSuggestions">
+                    <datalist id="fatherNameSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Gender:</label>
+                    <select id="gender">
+                        <option value="">-- Select --</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth:</label>
+                    <input type="date" id="dob">
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number:</label>
+                    <input id="mobile" list="mobileSuggestions">
+                    <datalist id="mobileSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Occupation:</label>
+                    <input id="occupation" list="occupationSuggestions">
+                    <datalist id="occupationSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>CRN Number:</label>
+                    <input id="crn" list="crnSuggestions">
+                    <datalist id="crnSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>House/Flat Number:</label>
+                    <input id="houseNo" list="houseNoSuggestions">
+                    <datalist id="houseNoSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Village/City:</label>
+                    <input id="city" list="citySuggestions">
+                    <datalist id="citySuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Post Office:</label>
+                    <input id="postOffice" list="postOfficeSuggestions">
+                    <datalist id="postOfficeSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>District:</label>
+                    <input id="district" list="districtSuggestions">
+                    <datalist id="districtSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>State:</label>
+                    <input id="state" list="stateSuggestions">
+                    <datalist id="stateSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Country:</label>
+                    <input id="country" list="countrySuggestions">
+                    <datalist id="countrySuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>PIN Code:</label>
+                    <input id="pin" list="pinSuggestions">
+                    <datalist id="pinSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>Aadhaar Number:</label>
+                    <input id="aadhaar" list="aadhaarSuggestions">
+                    <datalist id="aadhaarSuggestions"></datalist>
+                </div>
+                <div class="form-group">
+                    <label>PAN Number:</label>
+                    <input id="pan" list="panSuggestions">
+                    <datalist id="panSuggestions"></datalist>
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="saveUserInfo()">Next ></button>
+            </div>
+        </div>
+
+        <div id="step1" class="step section-card">
+            <h3>Step 1: Add Companies & Memberships</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Company:</label>
+                    <select id="company">
+                        <option value="SAHARA CREDIT COOPERATIVE SOCIETY LIMITED">SAHARA CREDIT COOPERATIVE SOCIETY
+                            LIMITED</option>
+                        <option value="HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED">HUMARA INDIA CREDIT COOPERATIVE
+                            SOCIETY LIMITED</option>
+                        <option value="SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED">SAHARAYN UNIVERSAL MULTIPURPOSE
+                            SOCITY LIMITED</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Member Name:</label>
+                    <input id="memberName" oninput="checkNameMatch()">
+                    <span id="nameError" class="error" style="display: none;">Name mismatch with Full Name</span>
+                </div>
+                <div class="form-group">
+                    <label>Membership No:</label>
+                    <input id="membershipNo">
+                </div>
+                <div class="form-group">
+                    <label>Date:</label>
+                    <input id="membershipDate" type="date">
+                </div>
+                <div class="form-group">
+                    <label>Application No:</label>
+                    <input id="applicationNo">
+                </div>
+            </div>
+            <div class="button-group">
+                <button onclick="addMembership()">Add Membership</button>
+            </div>
+            <h4>Added Memberships</h4>
+            <ul id="membershipList"></ul>
+            <div class="button-group">
+                <button onclick="toStep2()">Next</button>
+            </div>
+        </div>
+
+        <div id="step2" class="step section-card">
+            <h3 id="membershipHeading"></h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Scheme:</label>
+                    <select id="scheme"></select>
+                </div>
+                <div class="form-group">
+                    <label>Auth Code:</label>
+                    <input type="number" id="authCode" min="1000" max="9999" maxlength="4"
+                        placeholder="Enter 4-digit Auth Code">
+                </div>
+                <div class="form-group">
+                    <label>Branch:</label>
+                    <input type="text" id="branch">
+                </div>
+
+                <div class="form-group">
+                    <label>Region:</label>
+                    <input type="text" id="region">
+                </div>
+
+                <div class="form-group">
+                    <label>Account Opening Date:</label>
+                    <input id="accountDate" type="date">
+                </div>
+            </div>
+            <h4>Nominee Details</h4>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nominee Name:</label>
+                    <input id="nomineeName">
+                </div>
+                <div class="form-group">
+                    <label>Nominee Relation:</label>
+                    <input id="nomineeRelation">
+                </div>
+                <div class="form-group">
+                    <label>Nominee DOB:</label>
+                    <input id="nomineeDOB" type="date">
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="isSequential">
+                <label for="isSequential">Accounts in Sequence?</label>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Start Account No:</label>
+                    <input id="accNo" value="1000" type="number">
+                </div>
+                <div class="form-group">
+                    <label>Start Passbook No:</label>
+                    <input id="passNo" value="5000" type="number">
+                </div>
+                <div class="form-group">
+                    <label>Start Receipt No:</label>
+                    <input id="recNo" value="7000" type="number">
+                </div>
+                <div class="form-group">
+                    <label>If sequential, how many?:</label>
+                    <input id="seqCount" value="1" type="number">
+                </div>
+            </div>
+            <div id="accountsContainer"></div>
+            <div class="button-group">
+                <button onclick="addAccounts()">Add Accounts</button>
+                <button onclick="nextMembership()">Next Membership</button>
+                <button onclick="finish()">Finish</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- ===== FOOTER ===== -->
+    <footer>
+        © 2025 Sahara India Pariwar — All Rights Reserved
+    </footer>
+
+    <script>
+        // Field Remember Buttons (suggestions)
+        function saveSuggestion(fieldId) {
+            const input = document.getElementById(fieldId);
+            let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+            if (input.value && !suggestions.includes(input.value)) {
+                suggestions.push(input.value);
+                localStorage.setItem(fieldId, JSON.stringify(suggestions));
+            }
+        }
+
+        function loadSuggestions(fieldId) {
+            const datalist = document.getElementById(fieldId + "Suggestions");
+            let suggestions = JSON.parse(localStorage.getItem(fieldId) || "[]");
+            datalist.innerHTML = "";
+            suggestions.forEach(value => {
+                const option = document.createElement("option");
+                option.value = value;
+                datalist.appendChild(option);
+            });
+        }
+
+        const fields = ["fullName", "fatherName", "mobile", "occupation", "crn", "houseNo", "city", "postOffice", "district", "state", "country", "pin", "aadhaar", "pan"];
+        fields.forEach(loadSuggestions);
+        fields.forEach(id => {
+            document.getElementById(id).addEventListener("blur", () => {
+                saveSuggestion(id);
+                loadSuggestions(id);
+            });
+        });
+
+        let userInfo = {};
+        function saveUserInfo() {
+            userInfo = {
+                fullName: document.getElementById("fullName").value,
+                fatherName: document.getElementById("fatherName").value,
+                gender: document.getElementById("gender").value,
+                dob: document.getElementById("dob").value,
+                mobile: document.getElementById("mobile").value,
+                occupation: document.getElementById("occupation").value,
+                crn: document.getElementById("crn").value,
+                houseNo: document.getElementById("houseNo").value,
+                postOffice: document.getElementById("postOffice").value,
+                state: document.getElementById("state").value,
+                country: document.getElementById("country").value,
+                city: document.getElementById("city").value,
+                district: document.getElementById("district").value,
+                pin: document.getElementById("pin").value,
+                aadhaar: document.getElementById("aadhaar").value,
+                pan: document.getElementById("pan").value
+            };
+
+            // Switch steps with animation
+            document.getElementById("step0").classList.remove("active");
+            document.getElementById("step1").classList.add("active");
+        }
+
+        function checkNameMatch() {
+            const fullName = userInfo.fullName?.trim().toUpperCase();
+            const memberNameField = document.getElementById("memberName");
+            const memberName = memberNameField.value.trim().toUpperCase();
+            const errorText = document.getElementById("nameError");
+            if (fullName && memberName && fullName !== memberName) {
+                memberNameField.style.border = "2px solid #e74c3c";
+                errorText.style.display = "block";
+            } else {
+                memberNameField.style.border = "2px solid #e1e5e9";
+                errorText.style.display = "none";
+            }
+        }
+
+        // API call for Auth Code
+        async function fetchBranchAndRegion(authCode) {
+            try {
+                const response = await fetch('/api/branch-region', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ branchCode: authCode })
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.branchName && data.regionName) {
+                        document.getElementById('branch').value = data.branchName.trim();
+                        document.getElementById('region').value = data.regionName.trim();
+                    } else {
+                        alert('No branch or region found for this Auth Code');
+                    }
+                } else {
+                    const data = await response.json();
+                    alert('Failed to fetch branch and region: ' + (data.error || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error connecting to API');
+            }
+        }
+
+        // Event listener for Auth Code input
+        document.addEventListener('DOMContentLoaded', function () {
+            const authCodeInput = document.getElementById('authCode');
+            authCodeInput.addEventListener('input', function () {
+                const code = this.value;
+                if (code.length === 4) {
+                    fetchBranchAndRegion(code);
+                }
+            });
+        });
+
+        const memberships = [];
+        let currentMembership = -1;
+
+        const schemesByCompany = {
+            "SAHARA CREDIT COOPERATIVE SOCIETY LIMITED": [
+                "sahara s bhavishya 301.pdf",
+                "sahara s bhavishya 3011.psd",
+                "ALL membership.pdf",
+                "SAHARA 4DS.pdf",
+                "SAHARA A SELECT.pdf",
+                "SAHARA C ANOKHA.pdf",
+                "SAHARA DAY.pdf",
+                "SAHARA E SHINE--96 Month.pdf",
+                "SAHARA G ANOKHA- Monthly.pdf",
+                "SAHARA I SELECT..pdf",
+                "SAHARA M BENEFIT-60 Month SCCSL.pdf",
+                "SAHARA MINOR.pdf",
+                "SAHARA N SHINE.pdf",
+                "SAHARA S ANOKHA-Monthly.pdf",
+                "SAHARA SPECIAL.pdf",
+                "SAHARA SUPER.pdf",
+                "SAHARA WORKERS SC.pdf",
+                "SAHARA.V. DOUBLE.pdf",
+                "Y SELECT.pdf"
+            ],
+            "HUMARA INDIA CREDIT COOPERATIVE SOCIETY LIMITED": [
+                "GOLDEN A DOUBLE.pdf",
+                "HOME POINT-60- Monthly HICCSL.pdf",
+                "Member sahariyan.JPG",
+                "ROZANA.pdf",
+                "SAHARA GOLDEN 24.pdf",
+                "SAHARA U GOLDEN.pdf"
+            ],
+            "SAHARAYN UNIVERSAL MULTIPURPOSE SOCITY LIMITED": [
+                "GLOBAL FOUR.pdf",
+                "GLOBAL TRIPLE.pdf",
+                "GLOBAL.pdf",
+                "Saharayn.pdf",
+                "STAR TWO.pdf",
+                "SUPER AB..pdf",
+                "SUPER BB..pdf",
+                "SUPER TT.pdf"
+            ]
+        };
+
+        function addMembership() {
+            const company = document.getElementById('company').value;
+            const membershipNo = document.getElementById('membershipNo').value;
+            const date = document.getElementById('membershipDate').value;
+            const appNo = document.getElementById('applicationNo').value;
+            const memberName = document.getElementById('memberName').value;
+
+            if (!membershipNo || !date || !appNo) {
+                alert('Fill all fields');
+                return;
+            }
+
+            const membership = { company, membershipNo, memberName, date, appNo, accounts: [] };
+            memberships.push(membership);
+            const li = document.createElement('li');
+            li.innerHTML = `<span>${company} - ${membershipNo}</span>`;
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Delete';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.onclick = () => removeMembership(membership, li);
+            li.appendChild(deleteBtn);
+            document.getElementById('membershipList').appendChild(li);
+
+            document.getElementById('membershipNo').value = '';
+            document.getElementById('membershipDate').value = '';
+            document.getElementById('applicationNo').value = '';
+            document.getElementById('memberName').value = '';
+        }
+
+        function removeMembership(membership, li) {
+            const index = memberships.indexOf(membership);
+            if (index > -1) {
+                memberships.splice(index, 1);
+            }
+            li.remove();
+        }
+
+        function toStep2() {
+            if (memberships.length === 0) {
+                alert('Add at least one membership');
+                return;
+            }
+            document.getElementById('step1').classList.remove("active");
+            document.getElementById('step2').classList.add("active");
+            nextMembership();
+        }
+
+        function nextMembership() {
+            if (currentMembership + 1 >= memberships.length) {
+                alert('All memberships done');
+                return;
+            }
+            currentMembership++;
+            const mem = memberships[currentMembership];
+            document.getElementById('membershipHeading').innerHTML = `<strong>Filling accounts for:</strong> ${mem.company} - ${mem.membershipNo}`;
+            populateSchemes(mem.company);
+            document.getElementById('accountsContainer').innerHTML = '';
+            // Reset auth code fields
+            document.getElementById('authCode').value = '';
+            document.getElementById('branch').value = '';
+            document.getElementById('region').value = '';
+        }
+
+        function populateSchemes(company) {
+            const schemeSelect = document.getElementById('scheme');
+            schemeSelect.innerHTML = '';
+            const schemes = schemesByCompany[company] || [];
+            schemes.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                schemeSelect.appendChild(opt);
+            });
+        }
+
+        function addAccounts() {
+            const scheme = document.getElementById('scheme').value;
+            const authCode = document.getElementById('authCode').value;
+            const branch = document.getElementById('branch').value;
+            const region = document.getElementById('region').value;
+            const accountDate = document.getElementById('accountDate').value;
+            const nomineeName = document.getElementById('nomineeName').value;
+            const nomineeRelation = document.getElementById('nomineeRelation').value;
+            const nomineeDOB = document.getElementById('nomineeDOB').value;
+            const isSeq = document.getElementById('isSequential').checked;
+            let accNo = parseInt(document.getElementById('accNo').value);
+            let passNo = parseInt(document.getElementById('passNo').value);
+            let recNo = parseInt(document.getElementById('recNo').value);
+            const seqCount = parseInt(document.getElementById('seqCount').value);
+
+            if (!scheme || !authCode || !branch || !region || !accountDate) {
+                alert('Fill all fields');
+                return;
+            }
+
+            const container = document.getElementById('accountsContainer');
+
+            for (let i = 0; i < seqCount; i++) {
+                const appNo = prompt(`Enter Application No for account ${i + 1}`);
+                if (!appNo) {
+                    alert('Application No required');
+                    return;
+                }
+                const amount = prompt(`Enter Amount for account ${i + 1}`);
+                if (!amount) {
+                    alert('Amount required');
+                    return;
+                }
+                const amountWords = numberToWords(parseInt(amount));
+
+                const account = {
+                    nomineeName, nomineeRelation, nomineeDOB, scheme, authCode, branch, region, accountDate,
+                    accNo, passNo, recNo, appNo, amount, amountWords
+                };
+                memberships[currentMembership].accounts.push(account);
+
+                const div = document.createElement('div');
+                div.innerHTML = `Account: ${accNo}, Passbook: ${passNo}, Receipt: ${recNo}, Application: ${appNo}, Amount: ${amount} (${amountWords}), Scheme: ${scheme}<br>
+                                 Nominee: ${nomineeName} (${nomineeRelation}), DOB: ${nomineeDOB}`;
+                const deleteBtn = document.createElement('button');
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.onclick = () => removeAccount(account, div);
+                div.appendChild(deleteBtn);
+                container.appendChild(div);
+
+                accNo++;
+                passNo++;
+                recNo++;
+            }
+            document.getElementById('accNo').value = accNo;
+            document.getElementById('passNo').value = passNo;
+            document.getElementById('recNo').value = recNo;
+        }
+
+        function removeAccount(account, div) {
+            const mem = memberships[currentMembership];
+            const index = mem.accounts.indexOf(account);
+            if (index > -1) {
+                mem.accounts.splice(index, 1);
+            }
+            div.remove();
+        }
+
+        function numberToWords(n) {
+            const a = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+                "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+            const b = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+
+            if (n === 0) return "";
+            if (n < 20) return a[n];
+            if (n < 100) return b[Math.floor(n / 10)] + (n % 10 ? " " + a[n % 10] : "");
+            if (n < 1000) return a[Math.floor(n / 100)] + " hundred" + (n % 100 ? " " + numberToWords(n % 100) : "");
+            if (n < 100000) return numberToWords(Math.floor(n / 1000)) + " thousand" + (n % 1000 ? " " + numberToWords(n % 1000) : "");
+            if (n < 10000000) return numberToWords(Math.floor(n / 100000)) + " lakh" + (n % 100000 ? " " + numberToWords(n % 100000) : "");
+            if (n < 10000000000) return numberToWords(Math.floor(n / 10000000)) + " crore" + (n % 10000000 ? " " + numberToWords(n % 10000000) : "");
+            return "Number too large";
+        }
+
+        async function finish() {
+            if (memberships.length === 0 || memberships.some(m => m.accounts.length === 0)) {
+                alert('Complete all memberships and accounts');
+                return;
+            }
+
+            try {
+                const response = await fetch('/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userInfo, memberships })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    if (confirm('Do you want to verify the user?')) {
+                        window.location.href = '/Verify';
+                    } else {
+                        window.location.href = '/';
+                    }
+                } else {
+                    alert('Failed to save: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to save files.');
+            }
+        }
+    </script>
+</body>
+
+</html>

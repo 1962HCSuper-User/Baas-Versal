@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Filler</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    input[type="file"], button, select { display: block; margin: 10px 0; }
+    canvas { display: block; border: 1px solid black; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h2>PDF Filler Web App</h2>
+  <label>Select PDF:</label>
+  <select id="pdfSelect"></select>
+
+  <input type="file" id="dataFileInput" accept=".txt,.data">
+
+  <label>Upload Photo:</label>
+  <input type="file" id="photoInput" accept="image/*">
+
+  <label>Upload Signature:</label>
+  <input type="file" id="signatureInput" accept="image/*">
+
+  <button onclick="fillPdf()">Download Filled PDF</button>
+
+  <h3>Edit Field Settings</h3>
+  <label>Select Field:</label>
+  <select id="fieldSelect" onchange="loadFieldSettings()"></select>
+  <label>Page:</label> <span id="fieldPage"></span>
+  <label>Font Size:</label>
+  <input type="number" id="fontSizeInput" step="0.1">
+  <label>Char Spacing:</label>
+  <input type="number" id="charSpacingInput" step="0.1">
+  <button onclick="downloadCoordinates()">Download Updated Coordinates</button>
+
+  <label>Preview Page:</label>
+  <select id="pageSelect" onchange="renderPreview(this.value)"></select>
+  <canvas id="pdfCanvas"></canvas>
+
+  <!-- Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+  <script>
+    // ✅ Fix: set worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+    let parsedForms = [];
+    let coordinates = {};
+    let field_mapping = {};
+    let charSpacedFields = [];
+    let photo_signature = {};
+    let pdfDocRender = null;
+
+    // Parse data file
+    document.getElementById('dataFileInput').addEventListener('change', function (e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function (event) {
+        parsedForms = parseDataFile(event.target.result);
+        alert(`Parsed ${parsedForms.length} forms successfully.`);
+      };
+      reader.readAsText(file);
+    });
+
+    function parseDataFile(content) {
+      const formBlocks = content.split(/-{5,}/g);
+      return formBlocks.map(block => {
+        const lines = block.split('\n').filter(line => line.includes(':'));
+        const data = {};
+        lines.forEach(line => {
+          const [key, ...rest] = line.split(':');
+          data[key.trim()] = rest.join(':').trim();
+        });
+        return data;
+      });
+    }
+
+    // Load coordinates
+    async function loadCoordinatesForPDF(pdfName) {
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = `Coordinates/${pdfName}.js?cacheBust=${Date.now()}`;
+        script.onload = () => {
+          if (window.dynamicCoordinates) {
+            coordinates = window.dynamicCoordinates.coordinates;
+            field_mapping = window.dynamicCoordinates.field_mapping;
+            charSpacedFields = window.dynamicCoordinates.charSpacedFields;
+            photo_signature = window.dynamicCoordinates.photo_signature;
+            window.dynamicCoordinates = null;
+            resolve();
+          } else reject(new Error("No coordinates found in JS file"));
+        };
+        script.onerror = () => reject(new Error(`Failed to load coordinates for ${pdfName}`));
+        document.body.appendChild(script);
+      });
+    }
+
+    // Load PDF list
+    window.addEventListener("DOMContentLoaded", async () => {
+      const select = document.getElementById("pdfSelect");
+      try {
+        const response = await fetch("/api/pdf-list");
+        const pdfs = await response.json();
+        pdfs.forEach(pdf => {
+          const option = document.createElement("option");
+          option.value = pdf;
+          option.textContent = pdf;
+          select.appendChild(option);
+        });
+      } catch (err) {
+        alert("Failed to load PDF list");
+      }
+    });
+
+    async function loadImageBytes(file) {
+      const reader = new FileReader();
+      return new Promise((resolve, reject) => {
+        reader.onload = () => resolve(new Uint8Array(reader.result));
+        reader.onerror = reject;
+        reader.readAsArrayBuffer(file);
+      });
+    }
+
+    // On PDF select
+    document.getElementById("pdfSelect").addEventListener("change", async function() {
+      const pdfName = this.value.replace(/\.pdf$/i, "");
+      try {
+        await loadCoordinatesForPDF(pdfName);
+        populateFieldSelect();
+        await loadPdfForPreview(this.value);
+      } catch (err) { alert(err.message); }
+    });
+
+    // Populate field dropdown
+    function populateFieldSelect() {
+      const select = document.getElementById('fieldSelect');
+      select.innerHTML = '';
+      for (let pageIndex in coordinates) {
+        for (let key in coordinates[pageIndex]) {
+          const option = document.createElement('option');
+          option.value = `${pageIndex}:${key}`;
+          option.textContent = `${key} (Page ${parseInt(pageIndex)+1})`;
+          select.appendChild(option);
+        }
+      }
+    }
+
+    // Load PDF for preview
+    async function loadPdfForPreview(pdfFileName) {
+      const pdfUrl = `Pdf/${encodeURIComponent(pdfFileName)}`;
+      pdfDocRender = await pdfjsLib.getDocument(pdfUrl).promise;
+      populatePageSelect(pdfDocRender.numPages);
+      renderPreview(1);
+    }
+
+    function populatePageSelect(numPages) {
+      const select = document.getElementById('pageSelect');
+      select.innerHTML = '';
+      for (let i=1; i<=numPages; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `Page ${i}`;
+        select.appendChild(opt);
+      }
+    }
+
+    // Render PDF preview with overlay
+    async function renderPreview(pageNum) {
+      const canvas = document.getElementById('pdfCanvas');
+      const page = await pdfDocRender.getPage(parseInt(pageNum));
+      const scale = 1.5;
+      const viewport = page.getViewport({ scale });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      const renderCtx = { canvasContext: canvas.getContext('2d'), viewport };
+      await page.render(renderCtx).promise;
+
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = 'black';
+      const pageIndex = pageNum - 1;
+      if (coordinates[pageIndex]) {
+        for (let key in coordinates[pageIndex]) {
+          const coordInfo = coordinates[pageIndex][key];
+          const isSpaced = charSpacedFields.includes(key);
+          let text = parsedForms.length > 0 ? (parsedForms[0][field_mapping[key]] || "Test") : "Test";
+          coordInfo.coords.forEach(pos => {
+            ctx.font = `${(pos.font_size||12)*scale}px Arial`;
+            if (isSpaced) {
+              let currentX = pos.pos[0];
+              for (let char of text) {
+                const [cx, cy] = viewport.convertToViewportPoint(currentX, pos.pos[1]);
+                ctx.fillText(char, cx, cy);
+                currentX += pos.char_spacing || 10;
+              }
+            } else {
+              const [cx, cy] = viewport.convertToViewportPoint(pos.pos[0], pos.pos[1]);
+              ctx.fillText(text, cx, cy);
+            }
+          });
+        }
+      }
+    }
+
+    // Load field settings into inputs
+    function loadFieldSettings() {
+      const [pageIndex, key] = document.getElementById('fieldSelect').value.split(':');
+      const pos = coordinates[pageIndex][key].coords[0];
+      const isSpaced = charSpacedFields.includes(key);
+      document.getElementById('fontSizeInput').value = pos.font_size || 12;
+      document.getElementById('charSpacingInput').value = pos.char_spacing || (isSpaced ? 10 : '');
+      document.getElementById('charSpacingInput').disabled = !isSpaced;
+      document.getElementById('fieldPage').textContent = parseInt(pageIndex)+1;
+    }
+
+    // Update preview when font/spacing changes
+    document.getElementById('fontSizeInput').addEventListener('input', updatePreview);
+    document.getElementById('charSpacingInput').addEventListener('input', updatePreview);
+
+    function updatePreview() {
+      const [pageIndex, key] = document.getElementById('fieldSelect').value.split(':');
+      const pos = coordinates[pageIndex][key].coords[0];
+      pos.font_size = parseFloat(document.getElementById('fontSizeInput').value) || 12;
+      if (!document.getElementById('charSpacingInput').disabled) {
+        pos.char_spacing = parseFloat(document.getElementById('charSpacingInput').value) || 10;
+      }
+      renderPreview(parseInt(pageIndex)+1);
+    }
+
+    // Download updated coordinates.js
+    function downloadCoordinates() {
+      const jsContent = `window.dynamicCoordinates = ${JSON.stringify({coordinates, field_mapping, charSpacedFields, photo_signature}, null, 2)};`;
+      const blob = new Blob([jsContent], { type: 'application/javascript' });
+      const a = document.createElement('a');
+      const pdfName = document.getElementById('pdfSelect').value.replace(/\.pdf$/i, "");
+      a.href = URL.createObjectURL(blob);
+      a.download = `${pdfName}.js`;
+      a.click();
+    }
+
+    // === Fill PDF function (unchanged from your code) ===
+    async function fillPdf() {
+  const selectedPdf = document.getElementById('pdfSelect').value;
+  const photoFile = document.getElementById('photoInput').files[0];
+  const signatureFile = document.getElementById('signatureInput').files[0];
+
+  if (!selectedPdf || !photoFile || !signatureFile) {
+    alert("Please select PDF and upload photo & signature");
+    return;
+  }
+
+  if (parsedForms.length === 0) {
+    alert("Please upload a valid .txt data file first");
+    return;
+  }
+
+  const pdfUrl = `Pdf/${encodeURIComponent(selectedPdf)}`;
+  const basePdfBytes = await fetch(pdfUrl).then(res => res.arrayBuffer());
+
+  const [photoBytes, signatureBytes] = await Promise.all([
+    loadImageBytes(photoFile),
+    loadImageBytes(signatureFile)
+  ]);
+
+  for (let i = 0; i < parsedForms.length; i++) {
+    const formData = parsedForms[i];
+
+    const pdfDoc = await PDFLib.PDFDocument.load(basePdfBytes);
+    const pages = pdfDoc.getPages();
+
+    let photoImg, signatureImg;
+    try {
+      photoImg = await pdfDoc.embedJpg(photoBytes);
+    } catch {
+      photoImg = await pdfDoc.embedPng(photoBytes);
+    }
+
+    try {
+      signatureImg = await pdfDoc.embedPng(signatureBytes);
+    } catch {
+      signatureImg = await pdfDoc.embedJpg(signatureBytes);
+    }
+
+    for (let pageIndex in coordinates) {
+      const page = pages[pageIndex];
+      for (let key in coordinates[pageIndex]) {
+        const coordInfo = coordinates[pageIndex][key];
+        const fieldKey = field_mapping[key];
+        const text = formData[fieldKey] || "";
+
+        coordInfo.coords.forEach(pos => {
+          const isSpaced = charSpacedFields.includes(key);
+
+          if (isSpaced) {
+            let x = pos.pos[0];
+            for (let char of text) {
+              page.drawText(char, {
+                x: x,
+                y: pos.pos[1],
+                size: pos.font_size || 12,   // 👈 default
+                color: PDFLib.rgb(0, 0, 0)
+              });
+
+              x += pos.char_spacing || 10;
+          }
+          } else {
+            page.drawText(text, {
+            x: pos.pos[0],
+            y: pos.pos[1],
+           size: pos.font_size || 12,   // 👈 fallback to 12 if null
+           color: PDFLib.rgb(0, 0, 0)
+    });
+
+          }
+        });
+      }
+    }
+
+    // Photo
+    if (photo_signature.photo?.[0]) {
+      const photoPos = photo_signature.photo[0];
+      pages[0].drawImage(photoImg, {
+        x: photoPos.x,
+        y: photoPos.y,
+        width: photoPos.width,
+        height: photoPos.height
+      });
+    }
+
+    // Signature
+    for (let pageIndex in photo_signature.signature) {
+      photo_signature.signature[pageIndex].forEach(sig => {
+        pages[pageIndex].drawImage(signatureImg, {
+          x: sig.x,
+          y: sig.y,
+          width: sig.width,
+          height: sig.height
+        });
+      });
+    }
+
+    // Stamps
+    for (let pageIndex in photo_signature.stamps) {
+      for (let stamp of photo_signature.stamps[pageIndex]) {
+        const url = `Stamps/${stamp.file}`;
+        const stampBytes = await fetch(url).then(res => res.arrayBuffer());
+        const stampImg = await pdfDoc.embedPng(stampBytes);
+        pages[pageIndex].drawImage(stampImg, {
+          x: stamp.x,
+          y: stamp.y,
+          width: stamp.width,
+          height: stamp.height
+        });
+      }
+    }
+
+    // Save each filled PDF
+    const finalPdfBytes = await pdfDoc.save();
+    const blob = new Blob([finalPdfBytes], { type: 'application/pdf' });
+
+    const downloadLink = document.createElement('a');
+    const accountNo = formData.accountNo || `form_${i + 1}`;
+    
+    downloadLink.href = URL.createObjectURL(blob);
+    downloadLink.download = `A${accountNo}.pdf`;
+    downloadLink.click();
+
+    // Small delay to avoid browser throttling
+    await new Promise(r => setTimeout(r, 300));
+  }
+
+  alert("All forms have been downloaded!");
+}
+
+  </script>
+</body>
+</html>

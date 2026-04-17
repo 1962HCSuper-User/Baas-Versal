@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Form Coordinate Editor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background: #0b1220;
+            color: #e9eefb;
+            display: flex;
+            height: 100vh;
+        }
+
+        header {
+            padding: 10px;
+            background: #121a2b;
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            z-index: 10;
+        }
+
+        #sidebar {
+            width: 250px;
+            background: #121a2b;
+            padding: 60px 10px 10px;
+            overflow-y: auto;
+        }
+
+        #sidebar h3 {
+            margin-top: 0;
+        }
+
+        #sidebar .field-item {
+            padding: 5px;
+            border: 1px solid #444;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            background: #1e2638;
+        }
+
+        #sidebar .field-item:hover {
+            background: #2a3550;
+        }
+
+        #main {
+            flex: 1;
+            padding-top: 60px;
+            overflow: auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #pdf-container {
+            position: relative;
+            display: inline-block;
+            margin-top: 10px;
+        }
+
+        canvas {
+            background: #fff;
+            display: block;
+        }
+
+        .field {
+            position: absolute;
+            padding: 2px 6px;
+            border: 1px dashed #4af;
+            border-radius: 4px;
+            cursor: move;
+            background: rgba(0, 0, 0, 0.6);
+            color: #fff;
+            font-size: 14px;
+            white-space: nowrap;
+        }
+
+        .field .controls {
+            margin-top: 2px;
+            display: flex;
+            gap: 4px;
+        }
+
+        .field input {
+            width: 45px;
+            font-size: 12px;
+            padding: 1px;
+        }
+
+        #pager {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <input type="file" id="pdfUpload" accept="application/pdf">
+        <input type="file" id="txtUpload" accept=".txt">
+        <button id="previewBtn">Toggle Preview</button>
+        <button id="downloadBtn">Download JSON</button>
+    </header>
+
+    <div id="sidebar">
+        <h3>Fields</h3>
+        <div id="fields-list"></div>
+    </div>
+
+    <div id="main">
+        <div id="pdf-container"></div>
+        <div id="pager">
+            <button id="prevPage">Prev</button>
+            <span id="pageInfo"></span>
+            <button id="nextPage">Next</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        let pdfDoc = null, scale = 1.2, fieldsData = {}, preview = false;
+        let coordinates = { coordinates: {} };
+        let currentPage = 1;
+
+        document.getElementById('pdfUpload').addEventListener('change', handlePdf);
+        document.getElementById('txtUpload').addEventListener('change', handleTxt);
+        document.getElementById('previewBtn').addEventListener('click', togglePreview);
+        document.getElementById('downloadBtn').addEventListener('click', downloadJson);
+        document.getElementById('prevPage').addEventListener('click', () => changePage(-1));
+        document.getElementById('nextPage').addEventListener('click', () => changePage(1));
+
+        async function handlePdf(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const fileReader = new FileReader();
+            fileReader.onload = async function () {
+                const typedarray = new Uint8Array(this.result);
+                pdfDoc = await pdfjsLib.getDocument(typedarray).promise;
+                currentPage = 1;
+                renderPage(currentPage);
+            };
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        function drawTextWithSpacing(ctx, text, x, y, fontSize, charSpacing) {
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillStyle = "red";  // you can change preview color here
+            let currentX = x;
+            for (let char of text) {
+                ctx.fillText(char, currentX, y);
+                currentX += ctx.measureText(char).width + charSpacing;
+            }
+        }
+
+
+
+        async function renderPage(num) {
+            const container = document.getElementById('pdf-container');
+            container.innerHTML = "";
+
+            const page = await pdfDoc.getPage(num);
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement("canvas");
+            const context = canvas.getContext("2d");
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            container.appendChild(canvas);
+
+            const renderContext = { canvasContext: context, viewport };
+            await page.render(renderContext).promise;
+
+            if (!coordinates.coordinates[num - 1]) coordinates.coordinates[num - 1] = {};
+            document.getElementById("pageInfo").innerText = `Page ${num} / ${pdfDoc.numPages}`;
+
+            // restore existing fields on this page
+            if (preview) {
+                const ctx = canvas.getContext("2d");
+                Object.entries(coordinates.coordinates[num - 1]).forEach(([key, val]) => {
+                    const { pos, char_spacing, font_size } = val.coords[0];
+                    drawTextWithSpacing(
+                        ctx,
+                        fieldsData[key] || key,
+                        pos[0],
+                        pos[1],
+                        font_size || 14,
+                        char_spacing || 0
+                    );
+                });
+            } else {
+                Object.entries(coordinates.coordinates[num - 1]).forEach(([key, val]) => {
+                    const { pos, char_spacing, font_size } = val.coords[0];
+                    createField(
+                        key,
+                        fieldsData[key] || key,
+                        num - 1,
+                        container,
+                        canvas,
+                        pos[0],
+                        pos[1],
+                        font_size,
+                        char_spacing
+                    );
+                });
+            }
+        }
+
+        function createField(fieldName, fieldValue, pageNum, container, canvas, x = 50, y = 50, fontSize = 14, charSpacing = 16) {
+            const div = document.createElement("div");
+            div.className = "field";
+            div.style.left = x + "px";
+            div.style.top = y + "px";
+
+            const label = document.createElement("div");
+            label.innerText = preview ? fieldValue : fieldName;
+            div.appendChild(label);
+
+            const controls = document.createElement("div");
+            controls.className = "controls";
+            const fontInput = document.createElement("input");
+            fontInput.type = "number"; fontInput.value = fontSize; fontInput.title = "Font Size";
+            const spacingInput = document.createElement("input");
+            spacingInput.type = "number"; spacingInput.value = charSpacing; spacingInput.title = "Char Spacing";
+            controls.appendChild(fontInput);
+            controls.appendChild(spacingInput);
+            div.appendChild(controls);
+
+            div.dataset.field = fieldName;
+            div.dataset.page = pageNum;
+            div.dataset.fontSize = fontInput.value;
+            div.dataset.charSpacing = spacingInput.value;
+
+            fontInput.addEventListener("input", () => div.dataset.fontSize = fontInput.value);
+            spacingInput.addEventListener("input", () => div.dataset.charSpacing = spacingInput.value);
+
+            makeDraggable(div, container, canvas);
+            container.appendChild(div);
+        }
+
+        function makeDraggable(el, container, canvas) {
+            let offsetX, offsetY, isDown = false;
+
+            el.addEventListener("mousedown", e => {
+                if (e.target.tagName === "INPUT") return;
+                isDown = true;
+                offsetX = e.offsetX;
+                offsetY = e.offsetY;
+            });
+
+            container.addEventListener("mousemove", e => {
+                if (!isDown) return;
+                const rect = canvas.getBoundingClientRect();
+                let newX = e.clientX - rect.left - offsetX + container.scrollLeft;
+                let newY = e.clientY - rect.top - offsetY + container.scrollTop;
+                newX = Math.max(0, Math.min(newX, canvas.width - el.offsetWidth));
+                newY = Math.max(0, Math.min(newY, canvas.height - el.offsetHeight));
+                el.style.left = newX + "px";
+                el.style.top = newY + "px";
+            });
+
+            container.addEventListener("mouseup", () => isDown = false);
+        }
+
+        function handleTxt(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                fieldsData = parseTxt(reader.result);
+                renderFieldList();
+            };
+            reader.readAsText(file);
+        }
+
+        function renderFieldList() {
+            const list = document.getElementById("fields-list");
+            list.innerHTML = "";
+            Object.keys(fieldsData).forEach(key => {
+                const div = document.createElement("div");
+                div.className = "field-item";
+                div.innerText = key;
+                div.onclick = () => {
+                    const container = document.getElementById("pdf-container");
+                    const canvas = container.querySelector("canvas");
+                    if (!canvas) return;
+                    createField(key, fieldsData[key], currentPage - 1, container, canvas);
+                };
+                list.appendChild(div);
+            });
+        }
+
+        function parseTxt(text) {
+            const lines = text.split("\n");
+            const data = {};
+            lines.forEach(line => {
+                const [k, v] = line.split(":").map(s => s.trim());
+                if (k && v !== undefined) data[k] = v;
+            });
+            return data;
+        }
+
+        function togglePreview() {
+            preview = !preview;
+            saveCurrentPage();
+            renderPage(currentPage);
+        }
+
+        function changePage(dir) {
+            if (!pdfDoc) return;
+            let newPage = currentPage + dir;
+            if (newPage < 1 || newPage > pdfDoc.numPages) return;
+            saveCurrentPage();
+            currentPage = newPage;
+            renderPage(currentPage);
+        }
+
+        function saveCurrentPage() {
+            const canvas = document.querySelector("#pdf-container canvas");
+            if (!canvas) return;
+
+            document.querySelectorAll(".field").forEach(el => {
+                const page = el.dataset.page;
+                const key = el.dataset.field;
+                const x = parseFloat(el.style.left) / scale;
+                const y = parseFloat(el.style.top) / scale;  // ✅ measured from top
+
+                const charSpacing = parseFloat(el.dataset.charSpacing);
+                const fontSize = parseFloat(el.dataset.fontSize);
+
+                coordinates.coordinates[page][key] = {
+                    coords: [{ pos: [x, y], char_spacing: charSpacing, font_size: fontSize }]
+                };
+            });
+        }
+
+
+
+
+        function downloadJson() {
+            saveCurrentPage();
+
+            const jsContent = "window.dynamicCoordinates = " + JSON.stringify(coordinates, null, 0) + ";";
+            const blob = new Blob([jsContent], { type: "application/javascript" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "coordinates.js";   // downloads as JS
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+
+    </script>
+</body>
+
+</html>

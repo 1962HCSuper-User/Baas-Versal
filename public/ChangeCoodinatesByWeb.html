@@ -1,0 +1,1164 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Coordinate Editor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            padding: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 20px;
+        }
+
+        .upload-box {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #fafafa;
+        }
+
+        .upload-box:hover {
+            border-color: #4facfe;
+            background: #f0f9ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-box.active {
+            border-color: #4facfe;
+            background: #f0f9ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        .upload-box:hover .upload-icon {
+            color: #4facfe;
+        }
+
+        .upload-text {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .editor-section {
+            display: none;
+            padding: 30px;
+        }
+
+        .editor-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .page-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .editor-workspace {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 30px;
+            height: 70vh;
+        }
+
+        .pdf-container {
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            overflow: auto;
+            background: #f5f5f5;
+            position: relative;
+        }
+
+        .pdf-canvas {
+            display: block;
+            margin: 20px auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            cursor: crosshair;
+        }
+
+        .coordinate-marker {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid white;
+            cursor: move;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .coordinate-marker.field {
+            background: #ff6b6b;
+        }
+
+        .coordinate-marker.photo {
+            background: #4ecdc4;
+        }
+
+        .coordinate-marker.signature {
+            background: #45b7d1;
+        }
+
+        .coordinate-marker.stamp {
+            background: #f9ca24;
+        }
+
+        .coordinate-marker:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        .coordinate-marker.selected {
+            transform: scale(1.5);
+            box-shadow: 0 6px 16px rgba(79, 172, 254, 0.6);
+            border-color: #4facfe;
+        }
+
+        .coordinate-marker.dragging {
+            transform: scale(1.3);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            z-index: 20;
+        }
+
+        .sample-data-overlay {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 12px;
+            font-family: monospace;
+            color: #333;
+            pointer-events: none;
+            z-index: 5;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .drag-helper {
+            position: absolute;
+            background: rgba(79, 172, 254, 0.2);
+            border: 2px dashed #4facfe;
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+        }
+
+        .properties-panel {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .properties-panel h3 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.2rem;
+        }
+
+        .field-list {
+            margin-bottom: 30px;
+        }
+
+        .field-item {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4facfe;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .field-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .field-item.active {
+            background: #e3f2fd;
+            border-left-color: #1976d2;
+        }
+
+        .field-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .field-coords {
+            font-size: 0.8rem;
+            color: #666;
+            font-family: monospace;
+        }
+
+        .property-group {
+            margin-bottom: 20px;
+        }
+
+        .property-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .property-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+
+        .property-input:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4facfe;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .download-section {
+            text-align: center;
+            padding: 20px;
+            border-top: 2px solid #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📍 PDF Coordinate Editor</h1>
+            <p>Upload your coordinates.js file and PDF to visually adjust field positions</p>
+        </div>
+
+        <div class="upload-section">
+            <div class="upload-grid">
+                <div class="upload-box" onclick="document.getElementById('jsFile').click()">
+                    <div class="upload-icon">📄</div>
+                    <div class="upload-text">Upload coordinates.js</div>
+                    <div class="upload-subtext">JavaScript coordinates file</div>
+                    <input type="file" id="jsFile" class="file-input" accept=".js,.txt" onchange="handleJSFile(event)">
+                </div>
+                
+                <div class="upload-box" onclick="document.getElementById('pdfFile').click()">
+                    <div class="upload-icon">📋</div>
+                    <div class="upload-text">Upload PDF file</div>
+                    <div class="upload-subtext">PDF document to edit</div>
+                    <input type="file" id="pdfFile" class="file-input" accept=".pdf" onchange="handlePDFFile(event)">
+                </div>
+            </div>
+            
+            <div class="upload-grid" style="grid-template-columns: 1fr; margin-top: 20px;">
+                <div class="upload-box" onclick="document.getElementById('txtFile').click()">
+                    <div class="upload-icon">📝</div>
+                    <div class="upload-text">Upload Sample Data (Optional)</div>
+                    <div class="upload-subtext">TXT file with sample data to preview field placement</div>
+                    <input type="file" id="txtFile" class="file-input" accept=".txt" onchange="handleTXTFile(event)">
+                </div>
+            </div>
+            
+            <div id="uploadStatus"></div>
+        </div>
+
+        <div class="editor-section" id="editorSection">
+            <div class="editor-controls">
+                <div class="page-controls">
+                    <button class="btn btn-secondary" onclick="previousPage()" id="prevBtn">← Previous</button>
+                    <span id="pageInfo">Page 1 of 1</span>
+                    <button class="btn btn-secondary" onclick="nextPage()" id="nextBtn">Next →</button>
+                </div>
+                
+                <div>
+                    <button class="btn btn-primary" onclick="addNewField()">+ Add Field</button>
+                    <button class="btn btn-success" onclick="exportCoordinates()">💾 Export Coordinates</button>
+                </div>
+            </div>
+
+            <div class="editor-workspace">
+                <div class="pdf-container" id="pdfContainer">
+                    <canvas id="pdfCanvas" class="pdf-canvas"></canvas>
+                </div>
+
+                <div class="properties-panel">
+                    <h3>📋 Fields & Properties</h3>
+                    
+                    <div class="field-list" id="fieldList">
+                        <!-- Fields will be populated here -->
+                    </div>
+
+                    <div id="selectedProperties" style="display: none;">
+                        <h4>Selected Item Properties</h4>
+                        <div class="property-group">
+                            <label>X Position:</label>
+                            <input type="number" class="property-input" id="propX" onchange="updateSelectedProperty('x')" step="0.1">
+                        </div>
+                        <div class="property-group">
+                            <label>Y Position:</label>
+                            <input type="number" class="property-input" id="propY" onchange="updateSelectedProperty('y')" step="0.1">
+                        </div>
+                        <div class="property-group">
+                            <label>Character Spacing:</label>
+                            <input type="number" class="property-input" id="propCS" onchange="updateSelectedProperty('cs')">
+                        </div>
+                        <div class="property-group">
+                            <label>Font Size:</label>
+                            <input type="number" class="property-input" id="propFS" onchange="updateSelectedProperty('fs')">
+                        </div>
+                    </div>
+
+                    <div id="sampleDataSection" style="display: none; margin-top: 20px;">
+                        <h4>📝 Sample Data Preview</h4>
+                        <div style="max-height: 200px; overflow-y: auto; background: white; border-radius: 6px; padding: 10px; font-size: 0.8rem; font-family: monospace;">
+                            <div id="sampleDataContent"></div>
+                        </div>
+                        <div style="margin-top: 10px;">
+                            <label>
+                                <input type="checkbox" id="showSampleData" onchange="toggleSampleDataOverlay()"> 
+                                Show data on PDF
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="download-section" id="downloadSection" style="display: none;">
+            <button class="btn btn-success" onclick="downloadCoordinates()">📥 Download New Coordinates File</button>
+        </div>
+    </div>
+
+    <script>
+        let coordinatesData = null;
+        let pdfDoc = null;
+        let currentPage = 0;
+        let canvas = null;
+        let ctx = null;
+        let selectedMarker = null;
+        let markers = [];
+        let sampleData = null;
+        let sampleDataOverlays = [];
+        let isDragging = false;
+        let dragHelper = null;
+
+        // Set up PDF.js worker
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        function showStatus(message, type = 'success') {
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            setTimeout(() => statusDiv.innerHTML = '', 5000);
+        }
+
+        function handleJSFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    // Extract the coordinates object from the JS file
+                    const content = e.target.result;
+                    const match = content.match(/window\.dynamicCoordinates\s*=\s*({[\s\S]*?});/);
+                    
+                    if (match) {
+                        coordinatesData = JSON.parse(match[1]);
+                        showStatus('✅ Coordinates file loaded successfully!');
+                        document.querySelector('.upload-box').classList.add('active');
+                        checkReadyToEdit();
+                    } else {
+                        throw new Error('Invalid coordinates file format');
+                    }
+                } catch (error) {
+                    showStatus('❌ Error reading coordinates file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function handlePDFFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const typedarray = new Uint8Array(e.target.result);
+                
+                pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                    pdfDoc = pdf;
+                    showStatus('✅ PDF file loaded successfully!');
+                    document.querySelectorAll('.upload-box')[1].classList.add('active');
+                    checkReadyToEdit();
+                }).catch(function(error) {
+                    showStatus('❌ Error loading PDF: ' + error.message, 'error');
+                });
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function handleTXTFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    // Parse the sample data (assuming JSON format or key-value pairs)
+                    try {
+                        sampleData = JSON.parse(content);
+                    } catch {
+                        // If not JSON, try to parse as key-value pairs
+                        sampleData = {};
+                        const lines = content.split('\n');
+                        lines.forEach(line => {
+                            const [key, value] = line.split(':').map(s => s.trim());
+                            if (key && value) {
+                                sampleData[key] = value;
+                            }
+                        });
+                    }
+                    
+                    showStatus('✅ Sample data loaded successfully!');
+                    document.querySelectorAll('.upload-box')[2].classList.add('active');
+                    displaySampleData();
+                    
+                    if (coordinatesData && pdfDoc) {
+                        renderMarkers(); // Re-render to show sample data if enabled
+                    }
+                } catch (error) {
+                    showStatus('❌ Error reading sample data: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function displaySampleData() {
+            const sampleDataSection = document.getElementById('sampleDataSection');
+            const sampleDataContent = document.getElementById('sampleDataContent');
+            
+            sampleDataSection.style.display = 'block';
+            
+            let html = '';
+            Object.entries(sampleData).forEach(([key, value]) => {
+                html += `<div><strong>${key}:</strong> ${value}</div>`;
+            });
+            
+            sampleDataContent.innerHTML = html;
+        }
+
+        function checkReadyToEdit() {
+            if (coordinatesData && pdfDoc) {
+                document.getElementById('editorSection').style.display = 'block';
+                initializeEditor();
+            }
+        }
+
+        function initializeEditor() {
+            canvas = document.getElementById('pdfCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Add click event for canvas
+            canvas.addEventListener('click', handleCanvasClick);
+            
+            // Create drag helper
+            dragHelper = document.createElement('div');
+            dragHelper.className = 'drag-helper';
+            document.getElementById('pdfContainer').appendChild(dragHelper);
+            
+            renderPage(currentPage);
+            updatePageInfo();
+            populateFieldList();
+        }
+
+        function renderPage(pageNum) {
+            if (!pdfDoc) return;
+
+            pdfDoc.getPage(pageNum + 1).then(function(page) {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+
+                page.render(renderContext).promise.then(function() {
+                    renderMarkers();
+                });
+            });
+        }
+
+        function renderMarkers() {
+            // Clear existing markers and overlays
+            markers.forEach(marker => marker.remove());
+            markers = [];
+            sampleDataOverlays.forEach(overlay => overlay.remove());
+            sampleDataOverlays = [];
+
+            const pageData = coordinatesData.coordinates[currentPage];
+            if (!pageData) return;
+
+            // Render field markers
+            Object.entries(pageData).forEach(([fieldName, fieldData]) => {
+                fieldData.coords.forEach((coord, index) => {
+                    createMarker(coord.pos[0], coord.pos[1], 'field', fieldName, index);
+                });
+            });
+
+            // Render photo markers
+            if (coordinatesData.photo_signature?.photo?.[currentPage]) {
+                const photo = coordinatesData.photo_signature.photo[currentPage];
+                createMarker(photo.x, photo.y, 'photo', 'photo', 0);
+            }
+
+            // Render signature markers
+            if (coordinatesData.photo_signature?.signature?.[currentPage]) {
+                coordinatesData.photo_signature.signature[currentPage].forEach((sig, index) => {
+                    createMarker(sig.x, sig.y, 'signature', 'signature', index);
+                });
+            }
+
+            // Render stamp markers
+            if (coordinatesData.photo_signature?.stamps?.[currentPage]) {
+                coordinatesData.photo_signature.stamps[currentPage].forEach((stamp, index) => {
+                    createMarker(stamp.x, stamp.y, 'stamp', 'stamp', index);
+                });
+            }
+
+            // Render sample data overlays if enabled
+            if (sampleData && document.getElementById('showSampleData')?.checked) {
+                renderSampleDataOverlays();
+            }
+        }
+
+        function renderSampleDataOverlays() {
+            const pageData = coordinatesData.coordinates[currentPage];
+            if (!pageData || !sampleData) return;
+
+            Object.entries(pageData).forEach(([fieldName, fieldData]) => {
+                const mappedFieldName = coordinatesData.field_mapping?.[fieldName] || fieldName;
+                const sampleValue = sampleData[fieldName] || sampleData[mappedFieldName] || '';
+                
+                if (sampleValue) {
+                    fieldData.coords.forEach((coord, index) => {
+                        createSampleDataOverlay(coord.pos[0], coord.pos[1], sampleValue, fieldName);
+                    });
+                }
+            });
+        }
+
+        function createSampleDataOverlay(x, y, text, fieldName) {
+            const overlay = document.createElement('div');
+            overlay.className = 'sample-data-overlay';
+            
+            // Position overlay relative to canvas position within container
+            const container = document.getElementById('pdfContainer');
+            const canvas = document.getElementById('pdfCanvas');
+            const containerRect = container.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            const canvasOffsetX = canvasRect.left - containerRect.left;
+            const canvasOffsetY = canvasRect.top - containerRect.top;
+            
+            overlay.style.left = (canvasOffsetX + x * 1.5) + 'px';
+            overlay.style.top = (canvasOffsetY + y * 1.5 - 25) + 'px'; // Position above the marker
+            overlay.textContent = text;
+            overlay.title = `Sample data for ${fieldName}`;
+
+            document.getElementById('pdfContainer').appendChild(overlay);
+            sampleDataOverlays.push(overlay);
+        }
+
+        function toggleSampleDataOverlay() {
+            renderMarkers(); // Re-render to show/hide overlays
+        }
+
+        function createMarker(x, y, type, fieldName, index) {
+            const marker = document.createElement('div');
+            marker.className = `coordinate-marker ${type}`;
+            
+            // Position marker relative to canvas position within container
+            const container = document.getElementById('pdfContainer');
+            const canvas = document.getElementById('pdfCanvas');
+            const containerRect = container.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            const canvasOffsetX = canvasRect.left - containerRect.left;
+            const canvasOffsetY = canvasRect.top - containerRect.top;
+            
+            marker.style.left = (canvasOffsetX + x * 1.5) + 'px';
+            marker.style.top = (canvasOffsetY + y * 1.5) + 'px';
+            marker.dataset.type = type;
+            marker.dataset.fieldName = fieldName;
+            marker.dataset.index = index;
+            marker.title = `${fieldName} (${x.toFixed(1)}, ${y.toFixed(1)})`;
+
+            // Make marker draggable
+            marker.addEventListener('mousedown', startDrag);
+            marker.addEventListener('click', selectMarker);
+
+            document.getElementById('pdfContainer').appendChild(marker);
+            markers.push(marker);
+        }
+
+        function startDrag(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const marker = e.target;
+            const container = document.getElementById('pdfContainer');
+            const containerRect = container.getBoundingClientRect();
+            const canvasRect = canvas.getBoundingClientRect();
+            
+            isDragging = true;
+            marker.classList.add('dragging');
+            
+            // Show drag helper
+            dragHelper.style.display = 'block';
+            dragHelper.style.left = marker.style.left;
+            dragHelper.style.top = marker.style.top;
+            dragHelper.style.width = '20px';
+            dragHelper.style.height = '20px';
+
+            // Calculate initial offset from mouse to marker center
+            const markerRect = marker.getBoundingClientRect();
+            const offsetX = e.clientX - (markerRect.left + markerRect.width / 2);
+            const offsetY = e.clientY - (markerRect.top + markerRect.height / 2);
+
+            function onMouseMove(e) {
+                if (!isDragging) return;
+                
+                // Calculate new position relative to the canvas
+                const canvasX = e.clientX - canvasRect.left - offsetX - 6; // -6 for marker center
+                const canvasY = e.clientY - canvasRect.top - offsetY - 6;
+                
+                // Constrain to canvas bounds
+                const maxX = canvas.width - 12;
+                const maxY = canvas.height - 12;
+                const constrainedX = Math.max(0, Math.min(canvasX, maxX));
+                const constrainedY = Math.max(0, Math.min(canvasY, maxY));
+                
+                // Position relative to container (canvas position + canvas offset)
+                const containerX = constrainedX + (canvasRect.left - containerRect.left);
+                const containerY = constrainedY + (canvasRect.top - containerRect.top);
+                
+                marker.style.left = containerX + 'px';
+                marker.style.top = containerY + 'px';
+                
+                // Update drag helper
+                dragHelper.style.left = containerX + 'px';
+                dragHelper.style.top = containerY + 'px';
+                
+                // Update coordinate data in real-time (convert back to PDF coordinates)
+                updateCoordinateData(marker, constrainedX / 1.5, constrainedY / 1.5);
+                
+                // Update sample data overlay if it exists
+                updateSampleDataOverlay(marker, containerX, containerY);
+            }
+
+            function onMouseUp() {
+                isDragging = false;
+                marker.classList.remove('dragging');
+                dragHelper.style.display = 'none';
+                
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                
+                // Update properties panel if this marker is selected
+                if (selectedMarker === marker) {
+                    showProperties(marker);
+                }
+                
+                populateFieldList();
+                showStatus('📍 Coordinate updated successfully!');
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        }
+
+        function updateSampleDataOverlay(marker, containerX = null, containerY = null) {
+            if (!sampleData || !document.getElementById('showSampleData')?.checked) return;
+            
+            const fieldName = marker.dataset.fieldName;
+            const mappedFieldName = coordinatesData.field_mapping?.[fieldName] || fieldName;
+            const sampleValue = sampleData[fieldName] || sampleData[mappedFieldName] || '';
+            
+            if (sampleValue) {
+                // Find and update the corresponding overlay
+                const overlays = document.querySelectorAll('.sample-data-overlay');
+                overlays.forEach(overlay => {
+                    if (overlay.title.includes(fieldName)) {
+                        const x = containerX !== null ? containerX : parseFloat(marker.style.left);
+                        const y = containerY !== null ? containerY : parseFloat(marker.style.top);
+                        
+                        overlay.style.left = x + 'px';
+                        overlay.style.top = (y - 25) + 'px';
+                        overlay.style.zIndex = '15';
+                    }
+                });
+            }
+        }
+
+        function selectMarker(e) {
+            e.stopPropagation();
+            
+            // Remove previous selection
+            if (selectedMarker) {
+                selectedMarker.classList.remove('selected');
+            }
+
+            selectedMarker = e.target;
+            selectedMarker.classList.add('selected');
+            
+            showProperties(selectedMarker);
+        }
+
+        function showProperties(marker) {
+            const propertiesDiv = document.getElementById('selectedProperties');
+            propertiesDiv.style.display = 'block';
+
+            const x = parseFloat(marker.style.left) / 1.5;
+            const y = parseFloat(marker.style.top) / 1.5;
+
+            document.getElementById('propX').value = x.toFixed(1);
+            document.getElementById('propY').value = y.toFixed(1);
+
+            // Get additional properties if it's a field
+            if (marker.dataset.type === 'field') {
+                const fieldData = coordinatesData.coordinates[currentPage][marker.dataset.fieldName];
+                const coord = fieldData.coords[parseInt(marker.dataset.index)];
+                
+                document.getElementById('propCS').value = coord.cs || '';
+                document.getElementById('propFS').value = coord.fs || '';
+            }
+        }
+
+        function updateSelectedProperty(prop) {
+            if (!selectedMarker) return;
+
+            const value = parseFloat(document.getElementById(`prop${prop.toUpperCase()}`).value);
+            
+            if (prop === 'x') {
+                selectedMarker.style.left = (value * 1.5) + 'px';
+                updateCoordinateData(selectedMarker, value, parseFloat(selectedMarker.style.top) / 1.5);
+            } else if (prop === 'y') {
+                selectedMarker.style.top = (value * 1.5) + 'px';
+                updateCoordinateData(selectedMarker, parseFloat(selectedMarker.style.left) / 1.5, value);
+            } else {
+                updateCoordinateData(selectedMarker, null, null, prop, value);
+            }
+        }
+
+        function updateCoordinateData(marker, x, y, prop = null, value = null) {
+            const type = marker.dataset.type;
+            const fieldName = marker.dataset.fieldName;
+            const index = parseInt(marker.dataset.index);
+
+            if (type === 'field') {
+                const coord = coordinatesData.coordinates[currentPage][fieldName].coords[index];
+                if (x !== null && y !== null) {
+                    coord.pos = [x, y];
+                }
+                if (prop && value !== null) {
+                    coord[prop] = value;
+                }
+            } else if (type === 'photo') {
+                if (x !== null && y !== null) {
+                    coordinatesData.photo_signature.photo[currentPage].x = x;
+                    coordinatesData.photo_signature.photo[currentPage].y = y;
+                }
+            } else if (type === 'signature') {
+                if (x !== null && y !== null) {
+                    coordinatesData.photo_signature.signature[currentPage][index].x = x;
+                    coordinatesData.photo_signature.signature[currentPage][index].y = y;
+                }
+            } else if (type === 'stamp') {
+                if (x !== null && y !== null) {
+                    coordinatesData.photo_signature.stamps[currentPage][index].x = x;
+                    coordinatesData.photo_signature.stamps[currentPage][index].y = y;
+                }
+            }
+
+            populateFieldList();
+        }
+
+        function handleCanvasClick(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / 1.5;
+            const y = (e.clientY - rect.top) / 1.5;
+            
+            console.log(`Clicked at: (${x.toFixed(1)}, ${y.toFixed(1)})`);
+        }
+
+        function populateFieldList() {
+            const fieldList = document.getElementById('fieldList');
+            fieldList.innerHTML = '';
+
+            const pageData = coordinatesData.coordinates[currentPage];
+            if (pageData) {
+                Object.entries(pageData).forEach(([fieldName, fieldData]) => {
+                    fieldData.coords.forEach((coord, index) => {
+                        const fieldItem = document.createElement('div');
+                        fieldItem.className = 'field-item';
+                        fieldItem.dataset.fieldName = fieldName;
+                        fieldItem.dataset.index = index;
+                        
+                        // Show sample data if available
+                        const mappedFieldName = coordinatesData.field_mapping?.[fieldName] || fieldName;
+                        const sampleValue = sampleData ? (sampleData[fieldName] || sampleData[mappedFieldName] || '') : '';
+                        
+                        fieldItem.innerHTML = `
+                            <div class="field-name">${fieldName} ${index > 0 ? `(${index + 1})` : ''}</div>
+                            <div class="field-coords">x: ${coord.pos[0].toFixed(1)}, y: ${coord.pos[1].toFixed(1)}</div>
+                            ${sampleValue ? `<div style="font-size: 0.7rem; color: #666; margin-top: 3px;">📝 ${sampleValue}</div>` : ''}
+                        `;
+                        
+                        // Add click handler to select corresponding marker
+                        fieldItem.addEventListener('click', () => {
+                            const marker = markers.find(m => 
+                                m.dataset.fieldName === fieldName && 
+                                parseInt(m.dataset.index) === index &&
+                                m.dataset.type === 'field'
+                            );
+                            if (marker) {
+                                selectMarker({ target: marker, stopPropagation: () => {} });
+                            }
+                        });
+                        
+                        fieldList.appendChild(fieldItem);
+                    });
+                });
+            }
+
+            // Add other elements (photo, signature, stamps)
+            if (coordinatesData.photo_signature?.photo?.[currentPage]) {
+                const photo = coordinatesData.photo_signature.photo[currentPage];
+                const fieldItem = document.createElement('div');
+                fieldItem.className = 'field-item';
+                fieldItem.style.borderLeftColor = '#4ecdc4';
+                fieldItem.innerHTML = `
+                    <div class="field-name">📷 Photo</div>
+                    <div class="field-coords">x: ${photo.x.toFixed(1)}, y: ${photo.y.toFixed(1)}</div>
+                `;
+                fieldList.appendChild(fieldItem);
+            }
+
+            if (coordinatesData.photo_signature?.signature?.[currentPage]) {
+                coordinatesData.photo_signature.signature[currentPage].forEach((sig, index) => {
+                    const fieldItem = document.createElement('div');
+                    fieldItem.className = 'field-item';
+                    fieldItem.style.borderLeftColor = '#45b7d1';
+                    fieldItem.innerHTML = `
+                        <div class="field-name">✍️ Signature ${index > 0 ? `(${index + 1})` : ''}</div>
+                        <div class="field-coords">x: ${sig.x.toFixed(1)}, y: ${sig.y.toFixed(1)}</div>
+                    `;
+                    fieldList.appendChild(fieldItem);
+                });
+            }
+
+            if (coordinatesData.photo_signature?.stamps?.[currentPage]) {
+                coordinatesData.photo_signature.stamps[currentPage].forEach((stamp, index) => {
+                    const fieldItem = document.createElement('div');
+                    fieldItem.className = 'field-item';
+                    fieldItem.style.borderLeftColor = '#f9ca24';
+                    fieldItem.innerHTML = `
+                        <div class="field-name">🏷️ Stamp ${index > 0 ? `(${index + 1})` : ''}</div>
+                        <div class="field-coords">x: ${stamp.x.toFixed(1)}, y: ${stamp.y.toFixed(1)}</div>
+                    `;
+                    fieldList.appendChild(fieldItem);
+                });
+            }
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT') return; // Don't interfere with input fields
+            
+            switch(e.key) {
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    previousPage();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    nextPage();
+                    break;
+                case 'Delete':
+                case 'Backspace':
+                    if (selectedMarker && selectedMarker.dataset.type === 'field') {
+                        e.preventDefault();
+                        deleteSelectedField();
+                    }
+                    break;
+                case 'Escape':
+                    if (selectedMarker) {
+                        selectedMarker.classList.remove('selected');
+                        selectedMarker = null;
+                        document.getElementById('selectedProperties').style.display = 'none';
+                    }
+                    break;
+            }
+        });
+
+        function deleteSelectedField() {
+            if (!selectedMarker || selectedMarker.dataset.type !== 'field') return;
+            
+            const fieldName = selectedMarker.dataset.fieldName;
+            const index = parseInt(selectedMarker.dataset.index);
+            
+            if (confirm(`Delete coordinate ${index + 1} for field "${fieldName}"?`)) {
+                const fieldData = coordinatesData.coordinates[currentPage][fieldName];
+                fieldData.coords.splice(index, 1);
+                
+                // If no coordinates left, remove the field entirely
+                if (fieldData.coords.length === 0) {
+                    delete coordinatesData.coordinates[currentPage][fieldName];
+                }
+                
+                selectedMarker = null;
+                document.getElementById('selectedProperties').style.display = 'none';
+                renderMarkers();
+                populateFieldList();
+            }
+        }
+
+        function previousPage() {
+            if (currentPage > 0) {
+                // Clear selection when changing pages
+                if (selectedMarker) {
+                    selectedMarker.classList.remove('selected');
+                    selectedMarker = null;
+                    document.getElementById('selectedProperties').style.display = 'none';
+                }
+                
+                currentPage--;
+                renderPage(currentPage);
+                updatePageInfo();
+                populateFieldList();
+            }
+        }
+
+        function nextPage() {
+            if (currentPage < pdfDoc.numPages - 1) {
+                // Clear selection when changing pages
+                if (selectedMarker) {
+                    selectedMarker.classList.remove('selected');
+                    selectedMarker = null;
+                    document.getElementById('selectedProperties').style.display = 'none';
+                }
+                
+                currentPage++;
+                renderPage(currentPage);
+                updatePageInfo();
+                populateFieldList();
+            }
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = `Page ${currentPage + 1} of ${pdfDoc.numPages}`;
+            document.getElementById('prevBtn').disabled = currentPage === 0;
+            document.getElementById('nextBtn').disabled = currentPage === pdfDoc.numPages - 1;
+        }
+
+        function addNewField() {
+            const fieldName = prompt('Enter field name:');
+            if (!fieldName) return;
+
+            if (!coordinatesData.coordinates[currentPage]) {
+                coordinatesData.coordinates[currentPage] = {};
+            }
+
+            if (!coordinatesData.coordinates[currentPage][fieldName]) {
+                coordinatesData.coordinates[currentPage][fieldName] = {
+                    coords: [{ pos: [100, 100], cs: 18, fs: 15 }]
+                };
+            } else {
+                coordinatesData.coordinates[currentPage][fieldName].coords.push({
+                    pos: [100, 100], cs: 18, fs: 15
+                });
+            }
+
+            renderMarkers();
+            populateFieldList();
+        }
+
+        function exportCoordinates() {
+            document.getElementById('downloadSection').style.display = 'block';
+            showStatus('✅ Coordinates ready for download!');
+        }
+
+        function downloadCoordinates() {
+            const output = `window.dynamicCoordinates = ${JSON.stringify(coordinatesData, null, 2)};`;
+            
+            const blob = new Blob([output], { type: 'application/javascript' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'coordinates_updated.js';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('✅ Coordinates file downloaded successfully!');
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96df6611c1fe5a1e',t:'MTc1NDk5NTY4OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
