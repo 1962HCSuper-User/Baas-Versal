@@ -41,7 +41,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // ====== MYSQL CONFIG ======
 const db = mysql.createConnection({
-  host: "localhost",
+  host: "127.0.0.1",
   user: "root",
   password: "196200010#$Harsh", // change this
   database: "bass"       // change to your DB
